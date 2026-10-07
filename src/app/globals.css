@@ -1,0 +1,745 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ════════════════════════════════════════════════════════════
+   TalentMatch — single source of truth for the design system.
+   Palette: OPTVSN (deep blue on white).
+   Type:    Reckless GISI (display/headings) + Neue Haas Unica (UI/body).
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Brand fonts (licensed) ──────────────────────────────────
+   Drop the real .woff2 files into /public/fonts and UNCOMMENT to
+   activate. Until then the next/font fallbacks (Inter / Newsreader)
+   render in their place automatically.
+
+@font-face {
+  font-family: 'Neue Haas Unica';
+  src: url('/fonts/NeueHaasUnica-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Reckless GISI';
+  src: url('/fonts/RecklessGISI-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Reckless GISI';
+  src: url('/fonts/RecklessGISI-Italic.woff2') format('woff2');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+──────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Font stacks (brand first, self-hosted fallback second) ─ */
+  --font-sans-stack: 'Neue Haas Unica', var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-serif-stack: 'Reckless GISI', var(--font-newsreader), Georgia, 'Times New Roman', serif;
+
+  /* ── Color — OPTVSN palette ──────────────────────────────── */
+  --bg: #ffffff; /* background 0 0% 100% */
+  --surface: #fafafa; /* card 0 0% 98% */
+  --ink: #070b16; /* foreground 224 71% 4% — near-black navy */
+  --muted: #64748b; /* muted-foreground 215 16% 47% — AA on white */
+  --faint: #94a3b8; /* decorative only, never essential text */
+  --accent: #217dab; /* OPTVSN accent 200 68% 40% — borders/tints/large */
+  --accent-ink: #002e47; /* OPTVSN primary 201 100% 14% — text/fills (AA) */
+  --accent-tint: rgba(33, 125, 171, 0.1);
+  --accent-line: rgba(33, 125, 171, 0.28);
+  --amber-bg: rgba(202, 138, 4, 0.12);
+  --amber-ink: #854d0e; /* status text only */
+  --danger: #dc2626;
+  --hairline: #e2e8f0; /* border 214 32% 91% */
+  --hairline-2: #eef2f6;
+
+  /* ── Type scale — GISI ───────────────────────────────────── */
+  --fs-display: clamp(3rem, 8vw, 5.75rem); /* → 92px */
+  --fs-h1: clamp(2.5rem, 6vw, 4rem); /* → 64px */
+  --fs-h2: clamp(2rem, 4.5vw, 3rem); /* → 48px */
+  --fs-h3: clamp(1.5rem, 3vw, 2rem); /* → 32px */
+  --fs-h4: 1.5rem; /* 24px */
+  --fs-lead: 1.3125rem; /* 21px */
+  --fs-body: 1rem; /* 16px */
+  --fs-label: 0.875rem; /* 14px */
+  --fs-fine: 0.875rem; /* 14px */
+
+  /* ── Layout / shape ──────────────────────────────────────── */
+  --col: 560px;
+  --wrap: 1180px;
+  --radius-btn: 8px; /* OPTVSN --radius 0.5rem */
+  --radius-card: 14px;
+  --radius-pill: 999px;
+
+  /* ── Elevation — ONE language (cool, OPTVSN-flavoured) ────── */
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 12px 28px -22px rgba(16, 24, 40, 0.26);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body {
+  overflow-x: hidden; /* a translating swipe card can never scroll the page */
+  max-width: 100%;
+}
+
+.hdr,
+main {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: rgba(33, 125, 171, 0.18);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+p {
+  margin: 0;
+}
+
+/* ── Headings: Reckless GISI carried through EVERY screen ───── */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif-stack);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.serif {
+  font-family: var(--font-serif-stack);
+}
+.sans {
+  font-family: var(--font-sans-stack);
+}
+
+/* ── Type scale utilities (no inline font-size in components) ── */
+.t-display {
+  font-family: var(--font-serif-stack);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.003em;
+  text-wrap: balance;
+}
+.t-h1 {
+  font-family: var(--font-serif-stack);
+  font-size: var(--fs-h1);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.002em;
+}
+.t-h2 {
+  font-family: var(--font-serif-stack);
+  font-size: var(--fs-h2);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+.t-h3 {
+  font-family: var(--font-serif-stack);
+  font-size: var(--fs-h3);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.t-h4 {
+  font-family: var(--font-serif-stack);
+  font-size: var(--fs-h4);
+  font-weight: 400;
+  line-height: 1.12;
+}
+.t-lead {
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-lead);
+  line-height: 1.22;
+  letter-spacing: 0.25px;
+  color: var(--muted);
+  text-wrap: pretty;
+}
+.t-body {
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  letter-spacing: 0.15px;
+}
+.t-muted {
+  color: var(--muted);
+}
+.t-label {
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  color: var(--muted);
+}
+.t-fine {
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-fine);
+  line-height: 1.4;
+  color: var(--muted);
+}
+.eyebrow {
+  font-family: var(--font-sans-stack);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Layout helpers ─────────────────────────────────────────── */
+.wrap {
+  width: 100%;
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+.col {
+  width: 100%;
+  max-width: var(--col);
+  margin: 0 auto;
+}
+@media (max-width: 860px) {
+  .wrap {
+    padding: 0 24px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Button system — ONE family, three intents.
+   primary = solid (one per view) · base = outline · neutral · ghost
+   ════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  font-family: var(--font-sans-stack);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.15px;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-btn);
+  padding: 0.72em 1.35em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background 200ms ease, transform 200ms ease, color 200ms ease,
+    border-color 200ms ease, opacity 200ms ease;
+}
+.btn:hover {
+  background: var(--accent-tint);
+  color: var(--accent-ink);
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn--primary {
+  background: var(--accent-ink);
+  color: #fff;
+  border-color: var(--accent-ink);
+}
+.btn--primary:hover {
+  background: #00213a;
+  color: #fff;
+  border-color: #00213a;
+}
+
+.btn--neutral {
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+.btn--neutral:hover {
+  background: rgba(7, 11, 22, 0.04);
+  color: var(--ink);
+  border-color: var(--hairline);
+  transform: translateY(-2px);
+}
+
+.btn--ghost {
+  border-color: transparent;
+  color: var(--muted);
+  padding-left: 0.4em;
+  padding-right: 0.4em;
+}
+.btn--ghost:hover {
+  background: transparent;
+  color: var(--ink);
+  transform: none;
+}
+
+.link-accent {
+  font-family: var(--font-sans-stack);
+  color: var(--accent-ink);
+  font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.link-accent:hover {
+  text-decoration: underline;
+}
+
+.btn--lg {
+  font-size: 1.02rem;
+  padding: 0.92em 1.7em;
+}
+.btn--block {
+  width: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.hdr {
+  padding: 26px 0 18px;
+}
+.hdr__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hdr__mark {
+  font-size: 1.7rem;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.hdr__nav {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+.hdr__link {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 200ms ease;
+}
+.hdr__link:hover {
+  color: var(--ink);
+}
+@media (max-width: 860px) {
+  .hdr__link {
+    display: none;
+  }
+}
+
+/* ── Form fields ────────────────────────────────────────────── */
+.field label {
+  display: block;
+  font-family: var(--font-sans-stack);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.field input {
+  width: 100%;
+  font-family: var(--font-sans-stack);
+  font-size: 1rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--hairline);
+  border-radius: var(--radius-btn);
+  padding: 0.82em 0.95em;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.field input::placeholder {
+  color: var(--faint);
+}
+.field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+/* ── Surface card — single elevation language ───────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Pills / tags ───────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans-stack);
+  font-size: 0.88rem;
+  font-weight: 500;
+  background: rgba(7, 11, 22, 0.04);
+  border: 1px solid var(--hairline);
+  color: var(--ink);
+}
+.pill svg {
+  color: var(--muted);
+}
+.pill--match {
+  background: var(--accent-tint);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}
+/* ── Status chip — squared, editorial, with a status dot ────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border-radius: 7px;
+  font-family: var(--font-sans-stack);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+  white-space: nowrap;
+  line-height: 1;
+  border: 1px solid;
+}
+.status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.status--pending {
+  background: rgba(202, 138, 4, 0.1);
+  border-color: rgba(202, 138, 4, 0.32);
+  color: var(--amber-ink);
+}
+.status--pending .status__dot {
+  background: #ca8a04;
+}
+.status--accepted {
+  background: rgba(22, 101, 52, 0.1);
+  border-color: rgba(22, 101, 52, 0.28);
+  color: #166534;
+}
+.status--accepted .status__dot {
+  background: #16a34a;
+}
+.status--none {
+  background: rgba(7, 11, 22, 0.04);
+  border-color: var(--hairline);
+  color: var(--muted);
+}
+.status--none .status__dot {
+  background: var(--faint);
+}
+
+/* ── Button rows (stack on mobile) ──────────────────────────── */
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.btn-row > .btn,
+.btn-row > .btn--block {
+  width: 100%;
+}
+
+/* ── Swipe area (EDGE-FREE: no clipping container) ───────────────
+   The card drags and flies out freely with no edge cutting it.
+   html/body { overflow-x: hidden } is the only guard — it stops a
+   horizontal scrollbar without putting a visible edge on the card. */
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+.stage__enter {
+  animation: cardIn 280ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.stage__card {
+  position: relative;
+  padding: 30px 30px 26px;
+  touch-action: pan-y; /* keep vertical page scroll, capture horizontal drag */
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+.stage__tint {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  pointer-events: none;
+  transition: background 80ms linear;
+}
+.stage__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  max-width: 440px;
+  margin: 16px auto 0;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage__enter {
+    animation: fadeIn 1ms both; /* fade only, no scale */
+  }
+}
+
+/* ── Chat ───────────────────────────────────────────────────── */
+.chat-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(7, 11, 22, 0.32);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.chat {
+  width: 100%;
+  max-width: 440px;
+  height: min(620px, 86vh);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  box-shadow: 0 40px 90px -40px rgba(16, 24, 40, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px 15px 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+.chat__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fff;
+}
+.chat__msg {
+  max-width: 78%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  font-family: var(--font-sans-stack);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.chat__msg--them {
+  align-self: flex-start;
+  background: rgba(7, 11, 22, 0.05);
+  color: var(--ink);
+  border-bottom-left-radius: 5px;
+}
+.chat__msg--me {
+  align-self: flex-end;
+  background: var(--accent-ink);
+  color: #fff;
+  border-bottom-right-radius: 5px;
+}
+.chat__foot {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--hairline);
+}
+.chat__input {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px solid var(--hairline);
+  border-radius: 10px;
+  padding: 0.7em 0.9em;
+  font-family: var(--font-sans-stack);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.chat__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.chat__send {
+  flex: 0 0 auto;
+  width: 44px;
+  padding: 0;
+}
+
+/* ── How-it-works steps (hairline columns) ──────────────────── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.step {
+  padding: 8px 26px;
+  border-left: 1px solid var(--hairline);
+}
+.step:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+.step:last-child {
+  padding-right: 0;
+}
+.step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  font-family: var(--font-serif-stack);
+  font-size: 1.15rem;
+  color: var(--accent-ink);
+  margin-bottom: 22px;
+}
+.step h3 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+.step p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Feature list (ticked) ──────────────────────────────────── */
+.feat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.feat li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .steps {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 0;
+  }
+  .step {
+    padding: 8px 22px;
+  }
+  .step:nth-child(odd) {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+@media (max-width: 600px) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+  .step {
+    border-left: none;
+    padding-left: 0;
+  }
+  .btn-row {
+    grid-template-columns: 1fr;
+  }
+  .btn--lg {
+    font-size: 0.98rem;
+    padding: 0.85em 1.3em;
+  }
+  .chat-scrim {
+    padding: 0;
+  }
+  .chat {
+    max-width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+  }
+}
+
+/* ── Motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: revealUp 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  @keyframes revealUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
