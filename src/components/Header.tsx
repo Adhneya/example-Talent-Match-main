@@ -1,75 +1,94 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FLAGS } from '@/lib/flags';
+import { useStore } from '@/store/AppStore';
+import { Bell, Bookmark, Cards, Heart, UserIcon } from '@/components/Icons';
+import { useNotifications } from '@/hooks/useNotifications';
 
-/**
- * Header — structure converted VERBATIM from the provided HTML prototype.
- * Context-aware: the marketing nav shows on the marketing routes; inside the
- * app (profile / discover / dashboard) it collapses to the wordmark + a label
- * so the chrome matches where the user actually is.
- */
-const MARKETING_ROUTES = ['/', '/how-it-works', '/for-companies', '/signin'];
-
-export default function Header() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const isMarketing = MARKETING_ROUTES.includes(pathname);
-
-  const links = [
-    { label: 'How it works', href: '/how-it-works' },
-    { label: 'For companies', href: '/for-companies' },
+/** Primary navigation (Swipe · Saved · Matches · Profile). Matches is Phase 1, flagged. */
+function useNavItems() {
+  const { savedRoles, matches } = useStore();
+  return [
+    { href: '/swipe', label: 'Swipe', icon: <Cards size={20} /> },
+    { href: '/saved', label: 'Saved', icon: <Bookmark size={20} />, badge: savedRoles.length },
+    ...(FLAGS.matches
+      ? [{ href: '/matches', label: 'Matches', icon: <Heart size={20} />, badge: matches.length }]
+      : []),
+    { href: '/profile', label: 'Profile', icon: <UserIcon size={20} /> },
   ];
+}
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export default function Header({ shell = false }: { shell?: boolean }) {
+  const pathname = usePathname();
+  const items = useNavItems();
+  const { unread } = useNotifications();
 
   return (
-    <header className="hdr">
+    <header className={`hdr${shell ? ' hdr--shell' : ''}`}>
       <div className="wrap hdr__inner">
-        <a
-          href="/"
-          className="hdr__mark serif"
-          onClick={(e) => {
-            e.preventDefault();
-            router.push('/');
-          }}
-        >
+        <Link href={shell ? '/swipe' : '/'} className="hdr__mark" aria-label="TalentMatch home">
           TalentMatch
-        </a>
-        {isMarketing ? (
-          <nav className="hdr__nav">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                className="hdr__link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  router.push(l.href);
-                }}
+          <span className="hdr__mark-dot" aria-hidden="true" />
+        </Link>
+
+        {shell && (
+          <div className="hdr__end">
+            <nav className="tnav" aria-label="Primary">
+              {items.map((it) => (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  className="tnav__item"
+                  aria-current={isActive(pathname, it.href) ? 'page' : undefined}
+                >
+                  {it.icon}
+                  {it.label}
+                  {it.badge ? <span className="badge">{it.badge}</span> : null}
+                </Link>
+              ))}
+            </nav>
+            {FLAGS.notifications && (
+              <Link
+                href="/notifications"
+                className="icon-btn"
+                aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+                aria-current={isActive(pathname, '/notifications') ? 'page' : undefined}
               >
-                {l.label}
-              </a>
-            ))}
-            <a
-              href="/signin"
-              className="btn btn--ghost"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push('/signin');
-              }}
-            >
-              Sign in
-            </a>
-            <button className="btn" onClick={() => router.push('/')}>
-              Get started
-            </button>
-          </nav>
-        ) : (
-          <nav className="hdr__nav">
-            <span className="t-fine" style={{ letterSpacing: '0.04em' }}>
-              {pathname.startsWith('/dashboard') ? 'Hiring' : 'Candidate'}
-            </span>
-          </nav>
+                <Bell size={20} />
+                {unread ? <span className="badge">{unread}</span> : null}
+              </Link>
+            )}
+          </div>
         )}
       </div>
     </header>
+  );
+}
+
+/** Bottom navigation below 768px (IA §9). */
+export function BottomNav() {
+  const pathname = usePathname();
+  const items = useNavItems();
+  return (
+    <nav className="bnav" aria-label="Primary">
+      {items.map((it) => (
+        <Link
+          key={it.href}
+          href={it.href}
+          className="bnav__item"
+          aria-current={isActive(pathname, it.href) ? 'page' : undefined}
+        >
+          {it.icon}
+          {it.label}
+          {it.badge ? <span className="badge">{it.badge}</span> : null}
+        </Link>
+      ))}
+    </nav>
   );
 }

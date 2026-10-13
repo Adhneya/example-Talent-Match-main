@@ -51,7 +51,7 @@ export function Arrow({ size = 16, ...rest }: IconProps) {
 
 export function Tick({ size = 18, style, ...rest }: IconProps) {
   return (
-    <Svg size={size} style={{ color: 'var(--accent-ink)', ...style }} {...rest}>
+    <Svg size={size} style={style} {...rest}>
       <path
         fillRule="evenodd"
         d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z"
@@ -88,6 +88,107 @@ export function Cards({ size = 22, ...rest }: IconProps) {
   return (
     <Svg size={size} {...rest}>
       <path d="M5.566 4.657A4.505 4.505 0 0 1 6.75 4.5h10.5c.41 0 .806.055 1.183.157A3 3 0 0 0 15.75 3h-7.5a3 3 0 0 0-2.684 1.657ZM2.25 12a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3v-6ZM5.25 7.5c-.41 0-.806.055-1.184.157A3 3 0 0 1 6.75 6h10.5a3 3 0 0 1 2.683 1.657A4.505 4.505 0 0 0 18.75 7.5H5.25Z" />
+    </Svg>
+  );
+}
+
+export function Bookmark({ size = 22, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Star({ size = 18, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Bell({ size = 22, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Undo({ size = 18, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M9.53 2.47a.75.75 0 0 1 0 1.06L4.81 8.25H15a6.75 6.75 0 0 1 0 13.5h-3a.75.75 0 0 1 0-1.5h3a5.25 5.25 0 1 0 0-10.5H4.81l4.72 4.72a.75.75 0 1 1-1.06 1.06l-6-6a.75.75 0 0 1 0-1.06l6-6a.75.75 0 0 1 1.06 0Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function ExternalLink({ size = 16, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M15.75 2.25H21a.75.75 0 0 1 .75.75v5.25a.75.75 0 0 1-1.5 0V4.81L8.03 17.03a.75.75 0 0 1-1.06-1.06L19.19 3.75h-3.44a.75.75 0 0 1 0-1.5Zm-10.5 4.5a1.5 1.5 0 0 0-1.5 1.5v10.5a1.5 1.5 0 0 0 1.5 1.5h10.5a1.5 1.5 0 0 0 1.5-1.5V10.5a.75.75 0 0 1 1.5 0v8.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V8.25a3 3 0 0 1 3-3h8.25a.75.75 0 0 1 0 1.5H5.25Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Upload({ size = 22, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M11.47 2.47a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06l-3.22-3.22V16.5a.75.75 0 0 1-1.5 0V4.81L8.03 8.03a.75.75 0 0 1-1.06-1.06l4.5-4.5ZM3 15.75a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Doc({ size = 22, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+      <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+    </Svg>
+  );
+}
+
+export function UserIcon({ size = 22, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path
+        fillRule="evenodd"
+        d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+        clipRule="evenodd"
+      />
+    </Svg>
+  );
+}
+
+export function Pencil({ size = 16, ...rest }: IconProps) {
+  return (
+    <Svg size={size} {...rest}>
+      <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32L19.513 8.2Z" />
     </Svg>
   );
 }
