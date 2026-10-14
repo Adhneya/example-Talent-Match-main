@@ -8,6 +8,7 @@ import { postedLabel } from '@/lib/format';
 import { Cross, Heart } from '@/components/Icons';
 import { ApplyOutButton, RoleCardStatic, SourceBadge } from '@/components/RoleCard';
 import { detailNav } from '@/components/swipe/SwipeDeck';
+import { track } from '@/lib/analytics';
 
 /**
  * S-07 Role detail — "detail lives one tap deeper" (slide 5). A route so a
@@ -32,6 +33,7 @@ export default function RoleDetailSheet({ roleId }: { roleId: string }) {
   }
 
   useEffect(() => {
+    if (role) track('role_detail_opened', { role_id: role.id, via: detailNav.openedInApp ? 'in_app' : 'link' });
     const prevFocus = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
     const prevOverflow = document.body.style.overflow;
@@ -114,13 +116,20 @@ export default function RoleDetailSheet({ roleId }: { roleId: string }) {
                   {applied.includes(role.id) && ' You’ve applied.'}
                 </p>
               )}
-              <ApplyOutButton role={role} onApply={() => markApplied(role.id)} />
+              <ApplyOutButton
+                role={role}
+                onApply={() => {
+                  markApplied(role.id);
+                  if (role.source.kind === 'aggregated')
+                    track('apply_out_clicked', { role_id: role.id, source: role.source.name, from: 'detail' });
+                }}
+              />
               {!decision && (
                 <div className="sheet__actions-row">
                   <button
                     className="btn btn--pass btn--lg"
                     onClick={() => {
-                      decide(role, 'pass');
+                      decide(role, 'pass', 'detail');
                       close();
                     }}
                   >
@@ -129,7 +138,7 @@ export default function RoleDetailSheet({ roleId }: { roleId: string }) {
                   <button
                     className="btn btn--interested btn--lg"
                     onClick={() => {
-                      decide(role, 'interested');
+                      decide(role, 'interested', 'detail');
                       close();
                     }}
                   >

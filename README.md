@@ -66,7 +66,10 @@ src/
   appends a compensating record rather than deleting.
 - **Aggregated roles are one-sided apply.** Interested saves the role to `/saved`; applying
   always opens the source's own posting in a new tab.
-- **Missing pay range** shows a holding treatment — blocked on open decision 4.
+- **Roles without a published pay band never enter the deck** (decision 4). All product
+  decisions are logged in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+- **Responsive behaviour** follows [`docs/BREAKPOINTS.md`](docs/BREAKPOINTS.md)
+  (xs 400 · sm 640 · md 768 · lg 1080 · xl 1280), enforced by `e2e/responsive.spec.ts`.
 
 ### Testing error states
 
@@ -85,14 +88,31 @@ A resume whose filename contains `unreadable` also fails to parse.
   reduced motion). The employer "register interest" form stores entries in the browser only —
   wire it to a waitlist endpoint before launch.
 
+## Analytics
+
+- **Page views:** Vercel Web Analytics (`<Analytics />` in the root layout; cookieless). Enable
+  *Analytics* for the project in the Vercel dashboard.
+- **Product events:** one typed catalogue in `src/lib/analytics.ts` — landing CTAs, the onboarding
+  funnel (including real time-to-complete against the 2-minute budget), card impressions, swipes
+  with their method (button / gesture / keyboard / detail), undo, failures, detail opens,
+  apply-outs, saves and matches. Sent as Vercel custom events (custom events need a Vercel
+  Pro or Enterprise plan; on Hobby only page views are recorded).
+- **Privacy:** events carry ids, enums, counts and durations only — never emails, LinkedIn URLs
+  or file names. An e2e test enforces this.
+- **Debugging:** build with `NEXT_PUBLIC_ANALYTICS_DEBUG=1` to log events to the console and
+  collect them on `window.__TM_EVENTS__`.
+
 ## Design tokens
 
-Warm palette — Dominant `#FB924D`, Surface `#FBC59D`, Ink `#813502`, Accent `#7C7C74`,
-Detail `#C6B2A6` — defined in `src/app/globals.css` (`:root`) and mirrored in `tailwind.config.ts`.
+The deck's design language (Frontend Analysis Report §4): navy `#2F3C7E`, coral `#F96167`
+(pressed `#E24A50`), ink `#1B2140`, muted `#5B6178`, neutral `#9AA0B5`/`#AAB0C6`, tint `#F2F3F9`,
+border `#DDE0EC`, lilac on navy `#8891C9`/`#AEB6E4`/`#CFD6F5`, highlight `#F9E795`. Defined in
+`src/app/globals.css` (`:root`) and mirrored in `tailwind.config.ts`.
 
-Contrast rules: Dominant never carries small text (white on it is 2.2:1, Ink on it 3.8:1), so
-Dominant buttons use large bold Ink labels (≥18.7px); compact primaries are Ink with white text.
-Small grey text uses `#66665F` (Accent darkened to 4.5:1); form-field borders use Accent.
+Contrast rules: white on coral is 3:1, so coral carries only large bold labels (Interested) and
+icons; primary buttons are navy with white text (10:1). Eyebrows on white stay navy. Form-field
+borders use a derived `#858BA3` (3:1), since neutral `#9AA0B5` is too faint for a control edge.
 
-Type: Playfair Display (display), Inter (UI), Noto Sans Devanagari (Devanagari script),
-self-hosted via `next/font`.
+Type: **Cambria** (display) + **Calibri** (body), requested by name first; **Caladea** and
+**Carlito** — their metric-compatible open equivalents — are self-hosted via `next/font` for
+devices without Office fonts. Noto Sans Devanagari covers Devanagari script.

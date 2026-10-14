@@ -4,43 +4,40 @@
 
 /* ════════════════════════════════════════════════════════════
    TalentMatch — single source of truth for the design system.
-   Palette: warm — Dominant #fb924d · Surface #fbc59d · Ink #813502
-   · Accent #7c7c74 · Detail #c6b2a6. Type: Playfair Display
-   (display) + Inter (UI), with Noto Sans Devanagari.
+   Design language from the developer-guidance deck (Frontend
+   Analysis Report §4): navy/coral palette, Cambria display +
+   Calibri body. Noto Sans Devanagari for Devanagari script.
    ════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Font stacks (next/font provides the --font-* faces) ──── */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui;
-  --font-serif: var(--font-playfair), ui-serif, Georgia;
+  /* ── Type — Cambria (display) + Calibri (body) ─────────────
+     Requested by name first (present wherever Office is installed);
+     Caladea / Carlito are their metric-compatible open equivalents,
+     self-hosted via next/font, so layout is identical everywhere. */
+  --font-serif: Cambria, var(--font-caladea), ui-serif, Georgia, serif;
+  --font-sans: Calibri, var(--font-carlito), ui-sans-serif, system-ui, sans-serif;
   /* --font-devanagari is set directly by next/font on <html>. */
 
-  /* ── Palette ─────────────────────────────────────────────── */
-  --dominant: #fb924d; /* fills only: white on it 2.2:1, Ink on it 3.8:1 (large text) */
-  --dominant-soft: #fca46a; /* hover — lighter keeps Ink ≥ 3:1 */
-  --surface-warm: #fbc59d; /* tinted panels; light text on Ink (5.6:1) */
-  --accent: #7c7c74; /* borders/icons/large text (4.2:1 on white) */
-  --detail: #c6b2a6; /* card borders, dividers — decorative (2:1) */
-
-  /* ── Role tokens (names kept so every component follows the palette) ── */
-  --navy: #813502; /* dark anchor = Ink: card headers, primary fills (white on it 8.6:1) */
-  --navy-deep: #6a2b02; /* derived hover/pressed for Ink fills */
-  --coral: var(--dominant); /* Interested / match accent */
-  --coral-pressed: #e97a33; /* derived border for Dominant fills */
-  --ink: #813502; /* headings + body */
-  --muted: #66665f; /* Accent darkened to 4.5:1+ for small text */
-  --neutral: var(--accent); /* disabled / decorative */
-  --neutral-2: var(--accent); /* Pass button border, form control boundaries (≥3:1) */
-  --tint: #fde6d4; /* Surface lightened: pay panel, subtle fills */
-  --border: var(--detail); /* card edges */
-  --lilac: var(--detail); /* decorative on Ink */
-  --lilac-2: var(--surface-warm); /* secondary text on Ink */
-  --lilac-3: var(--surface-warm); /* metadata text on Ink */
-  --highlight: var(--surface-warm); /* eyebrow on Ink */
-  --bg: #fffaf6; /* warm off-white */
+  /* ── Color — deck tokens ─────────────────────────────────── */
+  --navy: #2f3c7e; /* primary: slide 1 bg, slide 5 card header, icon discs (white on it 10:1) */
+  --navy-deep: #252f66; /* derived: hover/pressed for navy fills */
+  --coral: #f96167; /* accent: match card, Interested affordance (white on it 3:1 — large text only) */
+  --coral-pressed: #e24a50; /* slide 5 Interested border; hover for coral fills (white 3.9:1) */
+  --ink: #1b2140; /* headings + body */
+  --muted: #5b6178; /* supporting copy — 6.1:1 on white */
+  --neutral: #9aa0b5; /* disabled / decorative only */
+  --neutral-2: #aab0c6; /* Pass button border */
+  --control: #858ba3; /* derived: form-control borders need 3:1 — #9AA0B5 is only 2.6:1 */
+  --tint: #f2f3f9; /* pay-range panel, surfaces */
+  --border: #dde0ec; /* card edges */
+  --lilac: #8891c9; /* on navy — decorative */
+  --lilac-2: #aeb6e4; /* on navy — secondary text (5:1) */
+  --lilac-3: #cfd6f5; /* on navy — metadata text (7:1) */
+  --highlight: #f9e795; /* slide 1 eyebrow — on navy (8:1) */
+  --bg: #ffffff;
   --danger: #c62828;
-  --success: #1f7a4d; /* functional: confirmations stay recognisably green */
-  --ring: 0 0 0 4px rgba(251, 146, 77, 0.45);
+  --success: #1f7a4d;
+  --ring: 0 0 0 4px rgba(47, 60, 126, 0.22);
 
   /* ── Type scale ──────────────────────────────────────────── */
   --fs-display: clamp(2.6rem, 7vw, 4.75rem);
@@ -61,8 +58,20 @@
   --radius-pill: 999px;
   --bnav-h: 68px;
 
-  --shadow-card: 0 1px 2px rgba(97, 40, 2, 0.05), 0 24px 48px -28px rgba(97, 40, 2, 0.3);
-  --shadow-pop: 0 40px 90px -40px rgba(97, 40, 2, 0.5);
+  /* ── Breakpoints (docs/BREAKPOINTS.md) ──────────────────────
+     Media queries can't read custom properties, so this is the
+     reference scale — use these literal values: "below bp" is
+     max-width: (bp − 0.02)px, "from bp" is min-width: bp. (The .98
+     closes the gap fractional viewports — zoom, display scaling —
+     would otherwise fall into between 767px and 768px.)
+       xs 400 · sm 640 · md 768 · lg 1080 · xl 1280
+     md and xl come from IA §9. Content breakpoints (e.g. the
+     landing nav at 920) are allowed only where content demands
+     it and must be listed in the spec. Input capability, not
+     width, decides gesture vs button emphasis. */
+
+  --shadow-card: 0 1px 2px rgba(27, 33, 64, 0.05), 0 18px 40px -26px rgba(27, 33, 64, 0.35);
+  --shadow-pop: 0 40px 90px -40px rgba(27, 33, 64, 0.55);
 }
 
 * {
@@ -87,8 +96,8 @@ body {
   max-width: 100%;
 }
 body {
-  /* Soft warm glow at the top of every screen, echoing the homepage. */
-  background: radial-gradient(90% 420px at 50% -120px, rgba(251, 197, 157, 0.45), transparent 70%) no-repeat,
+  /* Soft lilac glow at the top of every screen, echoing the homepage. */
+  background: radial-gradient(90% 420px at 50% -120px, rgba(174, 182, 228, 0.35), transparent 70%) no-repeat,
     var(--bg);
 }
 
@@ -98,7 +107,7 @@ body {
 }
 
 ::selection {
-  background: rgba(251, 146, 77, 0.3);
+  background: rgba(47, 60, 126, 0.16);
 }
 
 a {
@@ -210,7 +219,8 @@ h4 {
   max-width: var(--col);
   margin: 0 auto;
 }
-@media (max-width: 767px) {
+/* md — below 768px: 16px gutter */
+@media (max-width: 767.98px) {
   .wrap {
     padding: 0 16px;
   }
@@ -239,7 +249,7 @@ h4 {
 }
 .btn:hover {
   background: var(--tint);
-  border-color: var(--accent);
+  border-color: var(--neutral-2);
 }
 .btn:active {
   transform: scale(0.98);
@@ -253,44 +263,33 @@ h4 {
   opacity: 0.45;
   pointer-events: none;
 }
-/* Compact primary: Ink fill + white text (8.6:1). */
+/* Primary: navy fill + white text (10:1). Coral is reserved for Interested / match (deck). */
 .btn--primary {
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
-  box-shadow: 0 10px 22px -14px rgba(97, 40, 2, 0.8);
+  box-shadow: 0 10px 22px -14px rgba(47, 60, 126, 0.8);
 }
 .btn--primary:hover {
   background: var(--navy-deep);
   border-color: var(--navy-deep);
 }
-/* Large primary: Dominant fill like the homepage CTAs. Ink on Dominant is 3.8:1,
-   so the label is large bold text (≥18.7px). */
-.btn--primary.btn--lg {
-  background: var(--dominant);
-  border-color: var(--dominant);
-  color: var(--ink);
-  font-size: 1.1875rem;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 28px -14px rgba(251, 146, 77, 0.9);
-}
 .btn--primary.btn--lg:hover {
-  background: var(--dominant-soft);
-  border-color: var(--dominant-soft);
   transform: translateY(-1px);
 }
-/* Dominant + Ink text: large bold keeps it at AA-large (3.8:1).
-   `.btn.` prefix so the later `.btn--lg` font-size can't shrink it below 18.7px. */
+/* White on coral is 3:1, so the label is large bold text (≥18.7px, AA-large).
+   `.btn.` prefix so the later `.btn--lg` font-size can't shrink it. Hover darkens
+   to coral-pressed (3.9:1). */
 .btn.btn--interested {
   background: var(--coral);
   border-color: var(--coral-pressed);
-  color: var(--ink);
+  color: #fff;
   font-weight: 700;
   font-size: 1.1875rem;
-  box-shadow: 0 12px 26px -14px rgba(251, 146, 77, 0.9);
+  box-shadow: 0 12px 26px -14px rgba(226, 74, 80, 0.75);
 }
 .btn--interested:hover {
-  background: var(--dominant-soft);
+  background: var(--coral-pressed);
   border-color: var(--coral-pressed);
 }
 .btn.btn--pass {
@@ -333,7 +332,7 @@ h4 {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 250, 246, 0.82);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(14px) saturate(1.5);
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   border-bottom: 1px solid transparent;
@@ -439,7 +438,7 @@ h4 {
   height: 17px;
   padding: 0 5px;
   border-radius: 999px;
-  background: var(--ink); /* small text: white on Ink 8.6:1 (white on Dominant would be 2.2:1) */
+  background: var(--navy); /* small text: white on navy 10:1 (white on coral would be 3:1) */
   color: #fff;
   font-size: 0.66rem;
   font-weight: 700;
@@ -456,7 +455,8 @@ h4 {
 }
 
 /* Below 768px: single column with bottom navigation (IA §9). */
-@media (max-width: 767px) {
+/* md — below 768px: single column, bottom navigation (IA §9) */
+@media (max-width: 767.98px) {
   .tnav {
     display: none;
   }
@@ -484,7 +484,7 @@ h4 {
   font-size: 1rem;
   color: var(--ink);
   background: #fff;
-  border: 1.5px solid var(--accent); /* input boundary needs 3:1 — Detail is only 2:1 */
+  border: 1.5px solid var(--control); /* input boundary needs 3:1 (Accent/neutral #9AA0B5 is 2.6:1) */
   border-radius: 12px;
   padding: 0.8em 0.95em;
   transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -495,7 +495,7 @@ h4 {
 .input:focus {
   outline: none;
   border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(251, 146, 77, 0.35);
+  box-shadow: 0 0 0 3px rgba(47, 60, 126, 0.14);
 }
 .input[aria-invalid='true'] {
   border-color: var(--danger);
@@ -595,7 +595,7 @@ textarea.input {
   font-weight: 600;
   padding: 4px;
 }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .notice {
     bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom, 0px) + 16px);
   }
@@ -611,41 +611,7 @@ textarea.input {
   }
 }
 
-/* ════════════════════════════════════════════════════════════
-   Welcome (S-01)
-   ════════════════════════════════════════════════════════════ */
-.welcome {
-  padding: 48px 0 96px;
-  text-align: center;
-}
-.pillars {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 48px;
-  text-align: left;
-}
-.pillar {
-  padding: 26px 24px 28px;
-}
-.pillar__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: var(--highlight);
-  font-family: var(--font-serif);
-  font-weight: 700;
-  margin-bottom: 18px;
-}
-@media (max-width: 860px) {
-  .pillars {
-    grid-template-columns: 1fr;
-  }
-}
+/* Welcome (S-01) styles live in src/app/_landing/landing.module.css. */
 
 /* ════════════════════════════════════════════════════════════
    Onboarding (S-02 → S-05)
@@ -710,7 +676,7 @@ textarea.input {
 .dropzone:hover,
 .dropzone--over {
   border-color: var(--navy);
-  background: #fbdcc4;
+  background: #e9ebf6;
 }
 .dropzone:focus-within {
   outline: 2px solid var(--navy);
@@ -844,11 +810,11 @@ textarea.input {
   gap: 10px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #fff1e4;
-  border: 1px solid var(--surface-warm);
+  background: #fffbe6;
+  border: 1px solid var(--highlight);
 }
 .standout svg {
-  color: var(--ink);
+  color: #b58b00; /* gold star — pairs with the highlight tint */
   margin-top: 2px;
 }
 
@@ -1027,7 +993,7 @@ textarea.input {
   font-weight: 500;
   color: var(--muted);
 }
-/* BLOCKED — open decision 4. Holding treatment until pay sourcing is decided. */
+/* Defensive fallback for direct links only — decision 4 keeps pay-less roles out of the deck. */
 .pay--missing {
   background: #fff;
   border: 1.5px dashed var(--neutral-2);
@@ -1059,9 +1025,9 @@ textarea.input {
 }
 .rolecard__stamp--yes {
   right: 18px;
-  color: var(--ink);
-  border-color: var(--dominant);
-  background: #fff1e4;
+  color: var(--coral-pressed); /* decorative stamp (aria-hidden) */
+  border-color: var(--coral);
+  background: #fff;
   transform: rotate(8deg);
 }
 .rolecard__stamp--no {
@@ -1104,7 +1070,7 @@ textarea.input {
   animation: fadeIn 200ms ease both;
 }
 .undo:hover {
-  background: #fbdcc4;
+  background: #e9ebf6;
 }
 .deck__hint {
   font-size: 0.8rem;
@@ -1113,6 +1079,7 @@ textarea.input {
 .deck__hint--touch {
   display: none;
 }
+/* Input capability, not width: touch-first devices get the gesture hint (IA §9, see spec). */
 @media (hover: none) and (pointer: coarse) {
   .deck__hint--touch {
     display: inline;
@@ -1147,7 +1114,7 @@ textarea.input {
   position: fixed;
   inset: 0;
   z-index: 80;
-  background: rgba(64, 26, 1, 0.38);
+  background: rgba(27, 33, 64, 0.38);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   display: flex;
@@ -1200,11 +1167,12 @@ textarea.input {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* xl — from 1280px: role detail becomes a side panel beside the retained deck (IA §9) */
 @media (min-width: 1280px) {
   .sheet-scrim {
     justify-content: flex-end;
     align-items: stretch;
-    background: rgba(64, 26, 1, 0.12);
+    background: rgba(27, 33, 64, 0.12);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -1324,13 +1292,13 @@ textarea.input {
 }
 .status--trial {
   color: var(--ink);
-  border-color: var(--dominant);
-  background: var(--surface-warm);
+  border-color: var(--coral);
+  background: #fff0f1;
 }
 .status--interview {
-  color: var(--ink);
-  border-color: var(--ink);
-  background: #fff;
+  color: var(--navy);
+  border-color: var(--lilac-2);
+  background: var(--tint);
 }
 .status--pass {
   color: var(--muted);
@@ -1376,7 +1344,7 @@ textarea.input {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgba(64, 26, 1, 0.84);
+  background: rgba(27, 33, 64, 0.84);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1441,7 +1409,7 @@ textarea.input {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink); /* icon on Dominant: 3.8:1 */
+  color: #fff; /* icon on coral: 3:1 (graphics minimum) */
   box-shadow: 0 0 0 6px var(--navy);
 }
 .celebrate .btn:not(.btn--interested) {
@@ -1467,7 +1435,7 @@ textarea.input {
   font-size: 0.72rem;
   font-weight: 600;
 }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .dev-reset {
     display: none;
   }

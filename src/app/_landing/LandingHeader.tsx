@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { track } from '@/lib/analytics';
 import s from './landing.module.css';
 
 export const NAV = [
@@ -70,10 +71,15 @@ export default function LandingHeader({ resumeHref, resuming }: { resumeHref: st
             href={resumeHref}
             className={`${s.cta} ${s.ctaGhost} ${s.ctaSm} ${s.loginDesktop}`}
             title={resuming ? 'Pick up where you left off' : undefined}
+            onClick={() => track('landing_cta_clicked', { cta: 'log_in', location: 'header' })}
           >
             {loginLabel}
           </Link>
-          <Link href={resumeHref} className={`${s.cta} ${s.ctaPrimary} ${s.ctaSm} ${s.headerGetStarted}`}>
+          <Link
+            href={resumeHref}
+            className={`${s.cta} ${s.ctaPrimary} ${s.ctaSm} ${s.headerGetStarted}`}
+            onClick={() => track('landing_cta_clicked', { cta: 'get_started', location: 'header' })}
+          >
             Get Started
           </Link>
           <button
@@ -108,7 +114,11 @@ export default function LandingHeader({ resumeHref, resuming }: { resumeHref: st
             </a>
           ))}
           <div className={s.menuDivider} />
-          <Link href={resumeHref} className={s.menuLink}>
+          <Link
+            href={resumeHref}
+            className={s.menuLink}
+            onClick={() => track('landing_cta_clicked', { cta: 'log_in', location: 'menu' })}
+          >
             {loginLabel}
           </Link>
         </nav>

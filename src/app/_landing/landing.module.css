@@ -1,19 +1,14 @@
 /* ════════════════════════════════════════════════════════════
    TalentMatch homepage — page-scoped styles.
-   Palette tokens come from globals.css; only homepage-specific
-   differences are overridden on .page.
+   Palette and type tokens come from globals.css (deck design language).
    ════════════════════════════════════════════════════════════ */
 
 .page {
-  --coral-pressed: var(--dominant); /* homepage Dominant fills have no darker edge */
-  --lilac-2: var(--detail); /* hover borders on light cards */
-  --success: var(--ink); /* homepage ticks are Ink, not status green */
-
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ambient: 0 1px 2px rgba(97, 40, 2, 0.05), 0 24px 48px -28px rgba(97, 40, 2, 0.3);
-  --ambient-lg: 0 2px 4px rgba(97, 40, 2, 0.05), 0 40px 80px -36px rgba(97, 40, 2, 0.42);
+  --ambient: 0 1px 2px rgba(27, 33, 64, 0.04), 0 24px 48px -28px rgba(27, 33, 64, 0.28);
+  --ambient-lg: 0 2px 4px rgba(27, 33, 64, 0.04), 0 40px 80px -36px rgba(27, 33, 64, 0.42);
   color: var(--ink);
-  background: #fffaf6;
+  background: #fff;
 }
 
 .container {
@@ -68,37 +63,29 @@
 .cta:hover svg {
   transform: translateX(3px);
 }
-/* Dominant fill with Ink text: 3.8:1, so the label is set as large bold text (≥18.7px). */
+/* Navy fill + white text (10:1). Coral stays reserved for Interested / match. */
 .ctaPrimary {
-  background: var(--dominant);
-  color: var(--ink);
-  font-size: 1.1875rem;
+  background: var(--navy);
+  color: #fff;
+  font-size: 1.06rem;
   font-weight: 700;
   min-height: 52px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 28px -14px rgba(251, 146, 77, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 12px 28px -14px rgba(47, 60, 126, 0.8);
 }
 .ctaPrimary:hover {
-  background: var(--dominant-soft);
-  transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 18px 36px -16px rgba(251, 146, 77, 0.95);
-}
-/* Compact primary (header): too small for large-text contrast, so Ink fill + white text (8.6:1). */
-.ctaPrimary.ctaSm {
-  background: var(--ink);
-  color: #fff;
-  font-size: 0.92rem;
-  font-weight: 600;
-  min-height: 42px;
-  box-shadow: 0 10px 22px -14px rgba(97, 40, 2, 0.8);
-}
-.ctaPrimary.ctaSm:hover {
   background: var(--navy-deep);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 18px 36px -16px rgba(47, 60, 126, 0.85);
+}
+.ctaPrimary.ctaSm {
+  font-size: 0.92rem;
+  min-height: 42px;
 }
 .ctaSecondary {
   background: rgba(255, 255, 255, 0.8);
   color: var(--navy);
   border-color: var(--border);
-  box-shadow: 0 1px 2px rgba(97, 40, 2, 0.05);
+  box-shadow: 0 1px 2px rgba(27, 33, 64, 0.05);
 }
 .ctaSecondary:hover {
   border-color: var(--navy);
@@ -169,7 +156,7 @@
   height: 9px;
   border-radius: 50%;
   background: var(--coral);
-  box-shadow: 0 0 0 4px rgba(251, 146, 77, 0.14);
+  box-shadow: 0 0 0 4px rgba(249, 97, 103, 0.14);
 }
 .nav {
   display: flex;
@@ -181,7 +168,7 @@
 }
 .header[data-scrolled='false'] .nav {
   background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(198, 178, 166, 0.8);
+  border-color: rgba(221, 224, 236, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -229,7 +216,8 @@
   display: none;
 }
 
-@media (max-width: 920px) {
+/* Content breakpoint: the full landing nav needs ~920px; below that it collapses to a menu. */
+@media (max-width: 919.98px) {
   .headerInner {
     grid-template-columns: 1fr auto;
     height: 68px;
@@ -298,16 +286,16 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(55% 55% at 82% 28%, rgba(251, 197, 157, 0.5), transparent 70%),
-    radial-gradient(30% 35% at 92% 78%, rgba(251, 146, 77, 0.16), transparent 70%),
-    radial-gradient(45% 50% at 6% 4%, rgba(253, 230, 212, 1), transparent 70%);
+  background: radial-gradient(55% 55% at 82% 28%, rgba(174, 182, 228, 0.5), transparent 70%),
+    radial-gradient(30% 35% at 92% 78%, rgba(249, 97, 103, 0.16), transparent 70%),
+    radial-gradient(45% 50% at 6% 4%, rgba(242, 243, 249, 1), transparent 70%);
 }
 .heroGridLines {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: linear-gradient(rgba(129, 53, 2, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(129, 53, 2, 0.07) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(47, 60, 126, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(47, 60, 126, 0.07) 1px, transparent 1px);
   background-size: 56px 56px;
   -webkit-mask-image: radial-gradient(ellipse 60% 55% at 72% 42%, #000 15%, transparent 75%);
   mask-image: radial-gradient(ellipse 60% 55% at 72% 42%, #000 15%, transparent 75%);
@@ -377,13 +365,13 @@
 .headlineAccent {
   font-style: italic;
   font-weight: 500;
-  /* Dominant can't carry text on white (2.2:1), so it becomes a highlighter band behind Ink (3.8:1 at display size). */
-  color: var(--ink);
-  background-image: linear-gradient(var(--dominant), var(--dominant));
+  /* Coral-pressed on white is 3.9:1 — fine at display size (AA-large). Highlight band from slide 1. */
+  color: var(--coral-pressed);
+  background-image: linear-gradient(var(--highlight), var(--highlight));
   background-repeat: no-repeat;
-  background-size: 100% 0.36em;
-  background-position: 0 88%;
-  padding: 0 0.08em;
+  background-size: 100% 0.14em;
+  background-position: 0 92%;
+  padding: 0 0.04em;
 }
 .sub {
   margin-top: 26px;
@@ -421,8 +409,8 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--surface-warm);
-  color: var(--ink);
+  background: rgba(31, 122, 77, 0.1);
+  color: var(--success);
 }
 
 /* Hero entry — staggered on load */
@@ -460,8 +448,8 @@
   border: 1px solid rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 50px 100px -48px rgba(97, 40, 2, 0.55),
-    0 0 0 1px rgba(129, 53, 2, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 50px 100px -48px rgba(27, 33, 64, 0.55),
+    0 0 0 1px rgba(47, 60, 126, 0.06);
 }
 .frameTop {
   display: flex;
@@ -482,8 +470,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--dominant);
-  box-shadow: 0 0 0 3px rgba(251, 146, 77, 0.3);
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.15);
 }
 .stack {
   position: relative;
@@ -516,7 +504,7 @@
   border-radius: 22px;
   background: #fff;
   border: 1px solid var(--border);
-  box-shadow: 0 24px 50px -30px rgba(97, 40, 2, 0.5);
+  box-shadow: 0 24px 50px -30px rgba(27, 33, 64, 0.5);
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -606,9 +594,9 @@
 }
 .stampYes {
   right: 16px;
-  color: var(--ink);
-  border-color: var(--dominant);
-  background: #fff1e4;
+  color: var(--coral-pressed); /* decorative (aria-hidden) */
+  border-color: var(--coral);
+  background: #fff;
   transform: rotate(8deg);
 }
 .stampNo {
@@ -634,7 +622,7 @@
   border: 1px solid var(--border);
   background: #fff;
   color: var(--muted);
-  box-shadow: 0 10px 22px -14px rgba(97, 40, 2, 0.5);
+  box-shadow: 0 10px 22px -14px rgba(27, 33, 64, 0.5);
   transition: transform 200ms var(--ease), box-shadow 200ms var(--ease), color 200ms ease;
 }
 .roundBtn:hover {
@@ -651,14 +639,14 @@
 .roundBtnYes {
   width: 64px;
   height: 64px;
-  border-color: var(--dominant);
-  background: var(--dominant);
-  color: var(--ink); /* icon on Dominant: 3.8:1 (white would be 2.2:1) */
-  box-shadow: 0 16px 30px -14px rgba(251, 146, 77, 0.9);
+  border-color: var(--coral-pressed);
+  background: var(--coral);
+  color: #fff; /* icon on coral: 3:1 (graphics minimum) */
+  box-shadow: 0 16px 30px -14px rgba(226, 74, 80, 0.75);
 }
 .roundBtnYes:hover {
-  color: var(--ink);
-  background: var(--dominant-soft);
+  color: #fff;
+  background: var(--coral-pressed);
 }
 .previewHint {
   margin-top: 14px;
@@ -677,7 +665,7 @@
   padding: 10px 14px 10px 10px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(198, 178, 166, 0.9);
+  border: 1px solid rgba(221, 224, 236, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--ambient-lg);
@@ -721,8 +709,8 @@
   transition: opacity 260ms var(--ease), transform 360ms cubic-bezier(0.22, 1.4, 0.36, 1);
 }
 .chipMatch .chipIcon {
-  background: var(--dominant);
-  color: var(--ink);
+  background: var(--coral);
+  color: #fff;
 }
 .chipMatch .chipSub {
   color: var(--lilac-3);
@@ -746,7 +734,7 @@
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   /* Frosted band: the background tree reads through, softened. */
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(253, 230, 212, 0.55));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(242, 243, 249, 0.55));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -873,6 +861,7 @@
 }
 .stepCard {
   position: relative;
+  flex: 1; /* equal-height cards across the row */
   width: 100%;
   margin-top: 22px;
   padding: 30px 28px 28px;
@@ -901,7 +890,7 @@
   right: -90px;
   top: -110px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(251, 197, 157, 0.45), transparent 70%);
+  background: radial-gradient(circle, rgba(174, 182, 228, 0.45), transparent 70%);
   opacity: 0;
   transition: opacity 420ms ease;
   pointer-events: none;
@@ -968,7 +957,7 @@
 
 /* ── For talent ──────────────────────────────────────────────── */
 .talent {
-  background: linear-gradient(180deg, rgba(253, 230, 212, 0.5), rgba(255, 250, 246, 0) 70%);
+  background: linear-gradient(180deg, rgba(242, 243, 249, 0.5), rgba(255, 255, 255, 0) 70%);
 }
 .split {
   display: grid;
@@ -1105,14 +1094,14 @@
   gap: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #fff1e4;
-  border: 1px solid #fbc59d;
+  background: #fffbe6;
+  border: 1px solid var(--highlight);
   font-size: 0.86rem;
   font-weight: 500;
   line-height: 1.45;
 }
 .standout svg {
-  color: #813502;
+  color: #b58b00;
   margin-top: 1px;
 }
 .salaryRow {
@@ -1155,14 +1144,14 @@
   border-radius: 36px;
   background: var(--navy);
   color: #fff;
-  box-shadow: 0 60px 120px -60px rgba(129, 53, 2, 0.8);
+  box-shadow: 0 60px 120px -60px rgba(47, 60, 126, 0.8);
 }
 .employersPanel::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(50% 70% at 100% 0%, rgba(251, 146, 77, 0.55), transparent 70%),
-    radial-gradient(40% 50% at 0% 100%, rgba(251, 146, 77, 0.22), transparent 70%);
+  background: radial-gradient(50% 70% at 100% 0%, rgba(136, 145, 201, 0.55), transparent 70%),
+    radial-gradient(40% 50% at 0% 100%, rgba(249, 97, 103, 0.22), transparent 70%);
   pointer-events: none;
 }
 .employersPanel > * {
@@ -1187,7 +1176,7 @@
   padding: 16px 18px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(251, 197, 157, 0.2);
+  border: 1px solid rgba(207, 214, 245, 0.2);
 }
 .pathTitle {
   font-weight: 600;
@@ -1231,7 +1220,7 @@
   min-height: 50px;
   padding: 0 16px;
   border-radius: 14px;
-  border: 1.5px solid var(--accent); /* input boundary needs 3:1 — Detail is only 2:1 */
+  border: 1.5px solid var(--control); /* input boundary needs 3:1 */
   font-family: var(--font-sans);
   font-size: 1rem;
   color: var(--ink);
@@ -1256,7 +1245,7 @@
   margin-top: 20px;
   padding: 16px;
   border-radius: 16px;
-  background: #fde6d4;
+  background: #eef8f2;
   color: var(--ink);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -1282,7 +1271,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none; /* wind/shake listen on window, so clicks reach the content */
-  opacity: 0.3; /* behind section copy: keeps Ink text ≥ 4.5:1 even over the trunk */
+  opacity: 0.22; /* behind section copy: keeps muted text (#5B6178) ≥ 4.5:1 even over the navy trunk */
   transition: opacity 700ms ease;
 }
 .bgTree::after {
@@ -1293,13 +1282,13 @@
   right: 0;
   bottom: 0;
   height: 30vh;
-  background: radial-gradient(50% 100% at 50% 100%, rgba(251, 146, 77, 0.35), transparent 70%);
+  background: radial-gradient(50% 100% at 50% 100%, rgba(174, 182, 228, 0.45), transparent 70%);
   pointer-events: none;
 }
 /* In the hero on wide screens the trunk sits in the gap between headline and preview. */
-@media (min-width: 1081px) {
+@media (min-width: 1080px) {
   .page[data-hero='true'] .bgTree {
-    opacity: 0.62;
+    opacity: 0.55;
   }
 }
 .treeCanvas {
@@ -1359,7 +1348,8 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */
-@media (max-width: 1080px) {
+/* lg — below 1080px: two-column layouts stack */
+@media (max-width: 1079.98px) {
   .heroGrid {
     grid-template-columns: 1fr;
     gap: 64px;
@@ -1385,7 +1375,11 @@
     padding: 56px 40px;
   }
 }
-@media (max-width: 820px) {
+/* md — below 768px (shared with the app shell; docs/BREAKPOINTS.md) */
+@media (max-width: 767.98px) {
+  .container {
+    padding: 0 16px;
+  }
   .truthsGrid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1426,10 +1420,8 @@
     padding: 24px 22px;
   }
 }
-@media (max-width: 640px) {
-  .container {
-    padding: 0 16px;
-  }
+/* sm — below 640px */
+@media (max-width: 639.98px) {
   .hero {
     padding-bottom: 72px;
     padding-top: calc(68px + 28px);
@@ -1467,7 +1459,8 @@
     padding: 0 16px;
   }
 }
-@media (max-width: 400px) {
+/* xs — below 400px */
+@media (max-width: 399.98px) {
   .truthsGrid {
     grid-template-columns: 1fr;
   }

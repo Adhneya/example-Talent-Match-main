@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState } from 'react';
 import { Doc, Tick, Upload } from '@/components/Icons';
+import { track } from '@/lib/analytics';
 
 /* ── LinkedIn URL ──────────────────────────────────────────────── */
 
@@ -79,6 +80,8 @@ export function ResumeDropzone({
     if (!file) return;
     if (!isAccepted(file)) {
       setRejected(file.name);
+      // Extension only — never the file name.
+      track('connect_file_rejected', { extension: (file.name.split('.').pop() ?? '').toLowerCase().slice(0, 10) });
       return;
     }
     setRejected(null);

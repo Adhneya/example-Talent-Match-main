@@ -36,14 +36,15 @@ type Branch = {
 
 type Particle = { x: number; y: number; vx: number; vy: number; r: number; a: number; life: number; rate: number; phase: number };
 
-// Ink → amber → Dominant → Surface, trunk to tips.
+// Deck palette, trunk to tips: Ink → navy → lilac (#8891C9 → #AEB6E4 → #CFD6F5). Buds and motes are coral.
 const PALETTE: [number, number, number][] = [
-  [129, 53, 2],
-  [168, 78, 22],
-  [214, 112, 45],
-  [251, 146, 77],
-  [251, 197, 157],
+  [27, 33, 64],
+  [47, 60, 126],
+  [136, 145, 201],
+  [174, 182, 228],
+  [207, 214, 245],
 ];
+const CORAL = '249, 97, 103';
 
 const MAX_DEPTH = 9;
 const HOLD_MS = 7000;
@@ -222,8 +223,8 @@ export default function GrowthTree() {
         // Glowing buds on some of the outermost twigs.
         if (b.bud && b.depth === MAX_DEPTH && b.progress > 0.9) {
           const g = ctx!.createRadialGradient(b.ex, b.ey, 0, b.ex, b.ey, 3.5);
-          g.addColorStop(0, `rgba(251, 146, 77, ${0.6 * alpha})`);
-          g.addColorStop(1, 'rgba(251, 146, 77, 0)');
+          g.addColorStop(0, `rgba(${CORAL}, ${0.6 * alpha})`);
+          g.addColorStop(1, `rgba(${CORAL}, 0)`);
           ctx!.fillStyle = g;
           ctx!.beginPath();
           ctx!.arc(b.ex, b.ey, 3.5, 0, Math.PI * 2);
@@ -234,7 +235,7 @@ export default function GrowthTree() {
         const fade = p.life < 0.15 ? p.life / 0.15 : p.life > 0.8 ? (1 - p.life) / 0.2 : 1;
         const a = p.a * fade * alpha;
         if (a < 0.01) continue;
-        ctx!.fillStyle = `rgba(251, 146, 77, ${a})`;
+        ctx!.fillStyle = `rgba(${CORAL}, ${a})`;
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx!.fill();

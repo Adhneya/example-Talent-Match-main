@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { FLAGS } from '@/lib/flags';
 import { employerSwipedRight, getRole, postSwipe, uid } from '@/lib/api';
+import { track, type SwipeMethod } from '@/lib/analytics';
 import type { Decision, Match, OnboardingDraft, Profile, Role, SwipeRecord } from '@/lib/types';
 
 /**
@@ -103,7 +104,7 @@ interface StoreValue extends Persisted {
   confirmProfile: (p: Profile) => void;
   chooseTarget: (targetRoleId: string) => void;
   updateProfile: (p: Profile) => void;
-  decide: (role: Role, decision: Decision) => void;
+  decide: (role: Role, decision: Decision, method: SwipeMethod) => void;
   undo: () => void;
   removeSaved: (roleId: string) => void;
   markApplied: (roleId: string) => void;
@@ -170,13 +171,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const decide = useCallback<StoreValue['decide']>(
-    (role, decision) => {
+    (role, decision, method) => {
       const record: SwipeRecord = { id: uid(), at: Date.now(), roleId: role.id, kind: 'decision', decision };
       setLastDecision({ recordId: record.id, role, decision });
+      track('swipe', { role_id: role.id, decision, source_kind: role.source.kind, method });
       submit(
         record,
         () => {
           setLastDecision((l) => (l?.recordId === record.id ? null : l));
+          track('swipe_failed', { role_id: role.id });
           flash('error', `Couldn’t save your choice on ${role.company.name}. It’s back on top of the deck.`);
         },
         () => {
@@ -187,6 +190,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           setState((s) => ({ ...s, matches: [match, ...s.matches] }));
           setLastDecision((l) => (l?.recordId === record.id ? null : l)); // a match can't be undone
           setCelebrate(match.id);
+          track('match_created', { role_id: role.id });
         },
       );
     },
@@ -198,6 +202,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const { recordId, role } = lastDecision;
     const record: SwipeRecord = { id: uid(), at: Date.now(), roleId: role.id, kind: 'undo', reverses: recordId };
     setLastDecision(null);
+    track('swipe_undone', { role_id: role.id });
     submit(record, () => flash('error', 'Couldn’t undo that swipe. Try again in a moment.'));
   }, [lastDecision, submit, flash]);
 
@@ -235,11 +240,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       removeSaved: (roleId: string) => setState((s) => ({ ...s, unsaved: [...s.unsaved, roleId] })),
       markApplied: (roleId: string) =>
         setState((s) => (s.applied.includes(roleId) ? s : { ...s, applied: [...s.applied, roleId] })),
-      respondToTrial: (matchId: string, response: 'accepted' | 'declined') =>
+      respondToTrial: (matchId: string, response: 'accepted' | 'declined') => {
+        track('trial_responded', { response });
         setState((s) => ({
           ...s,
           matches: s.matches.map((m) => (m.id === matchId ? { ...m, trialResponse: response } : m)),
-        })),
+        }));
+      },
       markNotificationsSeen: () => setState((s) => ({ ...s, notificationsSeenAt: Date.now() })),
       dismissNotice: () => setNotice(null),
       clearCelebrate: () => setCelebrate(null),

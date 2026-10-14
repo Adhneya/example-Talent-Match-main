@@ -124,7 +124,7 @@ export const AGGREGATED_ROLES: Role[] = [
       'Partner with applied science on ranking models and with merchants on controls.',
     ],
     keywords: ['search', 'ml', 'strategy', 'e-commerce', 'technical'],
-    source: { kind: 'aggregated', name: 'Workday', applyUrl: 'https://example.com/jobs/orbit-ppm-search' },
+    source: { kind: 'aggregated', name: 'Greenhouse', applyUrl: 'https://example.com/jobs/orbit-ppm-search' },
   },
   {
     id: 'r-pine-design',

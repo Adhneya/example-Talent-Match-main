@@ -5,7 +5,12 @@
 
 # next.js
 /.next/
+/.next-test*/
 /out/
+
+# playwright
+/test-results/
+/playwright-report/
 
 # production
 /build

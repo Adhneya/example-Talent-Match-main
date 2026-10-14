@@ -10,9 +10,8 @@ import { InterviewStages, StatusChip } from '@/components/EngagementStatus';
 
 /**
  * S-10 Match detail — the employer-chosen branch and its status (slide 6).
- * Read-only until the employer acts. Trial depth is gated by open decision 5;
- * the candidate view of an employer pass is a GAP in the deck (copy below is
- * a proposal).
+ * Read-only until the employer acts. Trial terms are agreed per match (decision 5);
+ * an employer pass shows a polite closed status (docs/DECISIONS.md).
  */
 export default function MatchDetailPage() {
   const { matchId } = useParams<{ matchId: string }>();

@@ -6,6 +6,9 @@
  *
  * Inlined at build time. Enable locally with e.g.
  *   NEXT_PUBLIC_FLAG_MATCHES=1 NEXT_PUBLIC_FLAG_NOTIFICATIONS=1 npm run dev
+ *
+ * next.config.mjs mirrors these to include the flagged routes
+ * (page.phase1.tsx / page.phase2.tsx) only when on — keep the two in sync.
  */
 export const FLAGS = {
   matches: process.env.NEXT_PUBLIC_FLAG_MATCHES === '1',

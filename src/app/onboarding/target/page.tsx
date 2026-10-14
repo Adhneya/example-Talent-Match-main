@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/AppStore';
 import RoleTargetPicker, { suggestTarget } from '@/components/RoleTargetPicker';
+import { takeOnboardingDuration, track } from '@/lib/analytics';
 
 /** S-05 Target — the last onboarding step. Lands in the deck by replace, not push (IA §8). */
 export default function TargetPage() {
@@ -32,6 +33,9 @@ export default function TargetPage() {
           disabled={!target}
           onClick={() => {
             if (!target) return;
+            track('target_selected', { target, suggested: target === suggested });
+            const seconds = takeOnboardingDuration();
+            if (seconds !== null) track('onboarding_completed', { duration_s: seconds });
             chooseTarget(target);
             // Replace: onboarding is not returnable once the deck is reached.
             router.replace('/swipe');

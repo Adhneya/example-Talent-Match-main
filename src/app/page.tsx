@@ -9,6 +9,7 @@ import LandingHeader, { NAV, scrollToHash } from './_landing/LandingHeader';
 import SwipePreview from './_landing/SwipePreview';
 import EmployerNotify from './_landing/EmployerNotify';
 import GrowthTree from './_landing/GrowthTree';
+import { track } from '@/lib/analytics';
 import s from './_landing/landing.module.css';
 
 /** S-01 Welcome — the marketplace in three pillars (slide 2), with the swipe demonstrated up front. */
@@ -100,13 +101,25 @@ export default function HomePage() {
     return () => io.disconnect();
   }, []);
 
-  const findRoles = (
-    <Link href={resumeHref} className={`${s.cta} ${s.ctaPrimary}`}>
+  type CtaLocation = 'hero' | 'talent' | 'final';
+  const findRoles = (location: CtaLocation) => (
+    <Link
+      href={resumeHref}
+      className={`${s.cta} ${s.ctaPrimary}`}
+      onClick={() => track('landing_cta_clicked', { cta: 'find_roles', location })}
+    >
       {resuming ? 'Continue to roles' : 'Find Roles'} <Arrow size={18} />
     </Link>
   );
-  const postRole = (
-    <a href="#employers" className={`${s.cta} ${s.ctaSecondary}`} onClick={(e) => scrollToHash(e, '#employers', 'input')}>
+  const postRole = (location: CtaLocation) => (
+    <a
+      href="#employers"
+      className={`${s.cta} ${s.ctaSecondary}`}
+      onClick={(e) => {
+        track('landing_cta_clicked', { cta: 'post_role', location });
+        scrollToHash(e, '#employers', 'input');
+      }}
+    >
       Post a Role
     </a>
   );
@@ -139,8 +152,8 @@ export default function HomePage() {
                 Live roles with the pay shown up front. One tap to pass, one tap to say you’re interested.
               </p>
               <div className={`${s.ctaRow} ${s.enter}`} style={delay(260)}>
-                {findRoles}
-                {postRole}
+                {findRoles('hero')}
+                {postRole('hero')}
               </div>
               <ul className={`${s.assurances} ${s.enter}`} style={delay(340)}>
                 {['About two minutes to set up', 'Pay shown up front', 'You approve your profile first'].map((t) => (
@@ -236,7 +249,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <div className={s.ctaRow}>{findRoles}</div>
+              <div className={s.ctaRow}>{findRoles('talent')}</div>
             </div>
 
             <div className={`${s.profileVisual} ${s.reveal}`} data-reveal style={delay(160)} aria-hidden="true">
@@ -326,8 +339,8 @@ export default function HomePage() {
             </h2>
             <p className={s.lead}>Takes about two minutes. You’ll need your LinkedIn URL and a resume.</p>
             <div className={s.finalCtas}>
-              {findRoles}
-              {postRole}
+              {findRoles('final')}
+              {postRole('final')}
             </div>
           </div>
         </section>

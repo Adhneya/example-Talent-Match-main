@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import { Tick } from '@/components/Icons';
+import { track } from '@/lib/analytics';
 import s from './landing.module.css';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,6 +33,7 @@ export default function EmployerNotify() {
     } catch {
       /* storage unavailable — still confirm */
     }
+    track('employer_interest_submitted'); // never the email itself
     setDone(value);
   }
 

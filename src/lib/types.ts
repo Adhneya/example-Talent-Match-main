@@ -16,7 +16,7 @@ export interface PayRange {
 export type RoleSource =
   | {
       kind: 'aggregated';
-      /** Display name of the feed — vocabulary pending open decision 1. */
+      /** Display name of the feed — Greenhouse, Lever or Ashby (decision 1). */
       name: string;
       /** Outbound apply link. Aggregated roles are one-sided apply (slide 8). */
       applyUrl: string;
@@ -37,16 +37,13 @@ export interface Role {
   };
   title: string;
   summary: string; // the one-line description on the card
-  /** null when the listing omits a band — open decision 4. */
+  /** null when the listing omits a band; such roles are kept out of the deck (decision 4). */
   pay: PayRange | null;
   postedDaysAgo: number; // aggregation window is the last 30 days (slide 8)
   about: string[]; // detail-only paragraphs
   keywords: string[];
   source: RoleSource;
-  /**
-   * Ranking slot reserved on the contract (open decision 3). Populated by the
-   * ranker, never rendered on the card until the decision is made.
-   */
+  /** Rules-based ranking score (decision 3). Internal only — never rendered on the card. */
   fitScore?: number;
 }
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useStore } from '@/store/AppStore';
 import { fetchDeck } from '@/lib/api';
+import { track, type SwipeMethod } from '@/lib/analytics';
 import { TARGET_ROLES } from '@/lib/fixtures/roles';
 import type { Decision, Role } from '@/lib/types';
 import { Cards, Cross, Heart, Undo } from '@/components/Icons';
@@ -48,6 +49,20 @@ export default function SwipeDeck() {
   const target = TARGET_ROLES.find((t) => t.id === targetRoleId);
   const celebrating = celebrate ? matches.find((m) => m.id === celebrate) : undefined;
 
+  // Impressions: the denominator for swipe-through rates.
+  useEffect(() => {
+    if (!top || !queue) return;
+    track('deck_card_shown', { role_id: top.id, source_kind: top.source.kind, position: queue.indexOf(top) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [top?.id]);
+
+  // Exhaustion, once per transition from "has cards" to "empty".
+  const exhausted = queue !== null && !top;
+  useEffect(() => {
+    if (exhausted) track('deck_exhausted', { decided: decisions.size });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exhausted]);
+
   const openDetail = useCallback(
     (r: Role) => {
       detailNav.openedInApp = true;
@@ -79,7 +94,7 @@ export default function SwipeDeck() {
         <CardStack
           role={top}
           behind={Math.min(2, deck.length - 1)}
-          onDecide={(d) => decide(top, d)}
+          onDecide={(d, method) => decide(top, d, method)}
           onOpen={() => openDetail(top)}
           keyboard={!detailOpen && !celebrating}
         />
@@ -130,7 +145,7 @@ function CardStack({
 }: {
   role: Role;
   behind: number;
-  onDecide: (d: Decision) => void;
+  onDecide: (d: Decision, method: SwipeMethod) => void;
   onOpen: () => void;
   keyboard: boolean;
 }) {
@@ -148,6 +163,7 @@ function CardStack({
   const draggingRef = useRef(false);
   const decided = useRef(false);
   const exitRef = useRef<Decision | null>(null);
+  const methodRef = useRef<SwipeMethod>('button');
   const onDecideRef = useRef(onDecide);
   onDecideRef.current = onDecide;
 
@@ -164,12 +180,13 @@ function CardStack({
   const finish = useCallback(() => {
     if (decided.current || !exitRef.current) return;
     decided.current = true;
-    onDecideRef.current(exitRef.current);
+    onDecideRef.current(exitRef.current, methodRef.current);
   }, []);
 
-  const commit = useCallback((d: Decision) => {
+  const commit = useCallback((d: Decision, method: SwipeMethod) => {
     if (exitRef.current || decided.current) return;
     exitRef.current = d;
+    methodRef.current = method;
     setDragging(false);
     setExit(d);
   }, []);
@@ -186,8 +203,8 @@ function CardStack({
     function onKey(e: KeyboardEvent) {
       const el = e.target as HTMLElement | null;
       if (e.metaKey || e.ctrlKey || e.altKey || el?.closest('input, textarea, select, [contenteditable]')) return;
-      if (e.key === 'ArrowLeft') commit('pass');
-      else if (e.key === 'ArrowRight') commit('interested');
+      if (e.key === 'ArrowLeft') commit('pass', 'keyboard');
+      else if (e.key === 'ArrowRight') commit('interested', 'keyboard');
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -228,8 +245,8 @@ function CardStack({
     const dist = width * 0.33;
     const fast = Math.abs(vel.current) > 0.6; // px/ms — velocity-based commit
     const offset = e.clientX - startX.current;
-    if (offset > dist || (fast && vel.current > 0)) commit('interested');
-    else if (offset < -dist || (fast && vel.current < 0)) commit('pass');
+    if (offset > dist || (fast && vel.current > 0)) commit('interested', 'gesture');
+    else if (offset < -dist || (fast && vel.current < 0)) commit('pass', 'gesture');
     else setDx(0); // spring back
   }
   function onPointerCancel() {
@@ -305,12 +322,12 @@ function CardStack({
       </div>
 
       <div className="actionbar">
-        <button className="btn btn--pass btn--lg" onClick={() => commit('pass')} aria-keyshortcuts="ArrowLeft">
+        <button className="btn btn--pass btn--lg" onClick={() => commit('pass', 'button')} aria-keyshortcuts="ArrowLeft">
           <Cross size={20} /> Pass
         </button>
         <button
           className="btn btn--interested btn--lg"
-          onClick={() => commit('interested')}
+          onClick={() => commit('interested', 'button')}
           aria-keyshortcuts="ArrowRight"
         >
           <Heart size={20} /> Interested

@@ -5,30 +5,32 @@ import type { Config } from 'tailwindcss';
  * src/app/globals.css (:root). These map the same values onto Tailwind
  * utilities so the two never diverge.
  *
- * Palette: warm — Dominant #FB924D · Surface #FBC59D · Ink #813502
- *          · Accent #7C7C74 · Detail #C6B2A6.
- * Type:    Playfair Display (display) + Inter (UI) + Noto Sans Devanagari.
+ * Design language: the developer-guidance deck (Frontend Analysis Report §4).
+ * Type: Cambria (display) + Calibri (body), with Caladea / Carlito as their
+ * metric-compatible open fallbacks, plus Noto Sans Devanagari.
  */
 const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
       colors: {
-        dominant: { DEFAULT: '#FB924D', soft: '#FCA46A' },
-        surface: '#FBC59D',
-        ink: '#813502',
-        accent: '#7C7C74',
-        detail: '#C6B2A6',
-        muted: '#66665F',
-        tint: '#FDE6D4',
-        bg: '#FFFAF6',
+        navy: { DEFAULT: '#2F3C7E', deep: '#252F66' },
+        coral: { DEFAULT: '#F96167', pressed: '#E24A50' },
+        ink: '#1B2140',
+        muted: '#5B6178',
+        neutral: { DEFAULT: '#9AA0B5', 2: '#AAB0C6' },
+        control: '#858BA3',
+        tint: '#F2F3F9',
+        border: '#DDE0EC',
+        lilac: { DEFAULT: '#8891C9', 2: '#AEB6E4', 3: '#CFD6F5' },
+        highlight: '#F9E795',
         danger: '#C62828',
         success: '#1F7A4D',
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui'],
-        serif: ['var(--font-playfair)', 'ui-serif', 'Georgia'],
-        devanagari: ['var(--font-devanagari)', 'var(--font-inter)', 'ui-sans-serif'],
+        serif: ['Cambria', 'var(--font-caladea)', 'ui-serif', 'Georgia', 'serif'],
+        sans: ['Calibri', 'var(--font-carlito)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        devanagari: ['var(--font-devanagari)', 'Calibri', 'var(--font-carlito)', 'sans-serif'],
       },
       borderRadius: {
         btn: '999px',
@@ -40,7 +42,7 @@ const config: Config = {
         card: '400px',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(97,40,2,0.05), 0 24px 48px -28px rgba(97,40,2,0.3)',
+        card: '0 1px 2px rgba(27,33,64,0.05), 0 18px 40px -26px rgba(27,33,64,0.35)',
       },
     },
   },

@@ -52,7 +52,13 @@ export default function ZoneGuard({ children }: { children: ReactNode }) {
     if (hydrated && !allowed) router.replace(destination);
   }, [hydrated, allowed, destination, router]);
 
-  if (!hydrated || !allowed) return null;
+  // Welcome is public and has no state-dependent side effects, so it renders on
+  // the server (real HTML for crawlers, link previews and first paint). A live
+  // profile is redirected to the deck once storage hydrates.
+  // Every other route waits for hydration: pages like /onboarding/build start
+  // work on mount and must never run against the empty pre-hydration state.
+  if (!hydrated) return req === 'welcome' ? <>{children}</> : null;
+  if (!allowed) return null;
   return <>{children}</>;
 }
 

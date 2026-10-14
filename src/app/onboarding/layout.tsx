@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/Header';
+import { markOnboardingStart, track } from '@/lib/analytics';
 
 /** Three fixed steps — slide 3's hard constraint. Any new input must replace an existing one. */
 const STEPS = [
@@ -9,6 +11,7 @@ const STEPS = [
   { path: '/onboarding/build', label: 'Auto-build' },
   { path: '/onboarding/target', label: 'Target' },
 ];
+const STEP_KEYS = ['connect', 'build', 'target'] as const;
 
 function StepIndicator({ current }: { current: number }) {
   return (
@@ -39,6 +42,12 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
     0,
     STEPS.findIndex((s) => pathname.startsWith(s.path)),
   );
+
+  // Funnel: one event per step reached; the first one starts the two-minute clock (IA §7).
+  useEffect(() => {
+    markOnboardingStart();
+    track('onboarding_step_viewed', { step: STEP_KEYS[current] });
+  }, [current]);
 
   return (
     <>

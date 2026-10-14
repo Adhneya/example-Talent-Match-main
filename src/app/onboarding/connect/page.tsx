@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/AppStore';
+import { track } from '@/lib/analytics';
 import { LinkedInUrlField, ResumeDropzone, normalizeLinkedIn } from '@/components/onboarding/ConnectInputs';
 
 /** S-02 Connect — a URL paste and a file upload. Nothing else typed by hand (slide 3). */
@@ -18,6 +19,7 @@ export default function ConnectPage() {
   function next() {
     if (!linkedin || !resume) return;
     setConnect(linkedin, resume);
+    track('connect_submitted');
     router.push('/onboarding/build');
   }
 

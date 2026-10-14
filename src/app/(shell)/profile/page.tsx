@@ -5,6 +5,7 @@ import { useStore } from '@/store/AppStore';
 import ProfileConfirmCard from '@/components/ProfileConfirmCard';
 import RoleTargetPicker from '@/components/RoleTargetPicker';
 import type { Profile } from '@/lib/types';
+import { track } from '@/lib/analytics';
 
 /**
  * S-11 Profile — derived from "confirm or tweak" (slide 3). Without it the
@@ -44,6 +45,7 @@ export default function ProfilePage() {
               className="btn btn--primary btn--lg"
               onClick={() => {
                 updateProfile(draft);
+                track('profile_updated');
                 setSavedAt(Date.now());
               }}
             >
@@ -63,7 +65,13 @@ export default function ProfilePage() {
         <p className="t-body t-muted" style={{ marginTop: 6, marginBottom: 16 }}>
           Changing this re-ranks your deck straight away.
         </p>
-        <RoleTargetPicker value={targetRoleId} onChange={chooseTarget} />
+        <RoleTargetPicker
+          value={targetRoleId}
+          onChange={(id) => {
+            chooseTarget(id);
+            track('target_changed', { target: id });
+          }}
+        />
       </section>
 
       {sources && (

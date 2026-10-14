@@ -77,7 +77,7 @@ export async function buildProfile(
   };
 }
 
-/* ── Inventory + match & rank v1 (slide 10: rules + keyword weighting) ── */
+/* ── Inventory + match & rank v1 (decision 3: rules + keyword weighting, score not shown) ── */
 
 type InventoryRole = Role & { demoEmployer?: (typeof NATIVE_ROLES)[number]['demoEmployer'] };
 
@@ -106,7 +106,12 @@ export function rank(roles: Role[], profile: Profile, targetRoleId: string): Rol
 
 export async function fetchDeck(profile: Profile, targetRoleId: string): Promise<Role[]> {
   await wait(350);
-  return rank(inventory(), profile, targetRoleId);
+  // Decision 4 (docs/DECISIONS.md): pay is the hook, so roles without a published band never enter the deck.
+  return rank(
+    inventory().filter((r) => r.pay !== null),
+    profile,
+    targetRoleId,
+  );
 }
 
 /* ── Swipe ledger ──────────────────────────────────────────────── */

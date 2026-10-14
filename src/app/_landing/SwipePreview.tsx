@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cross, Heart } from '@/components/Icons';
+import { track } from '@/lib/analytics';
 import s from './landing.module.css';
 
 /** Sample cards for the hero demo — fictional companies, same regions as the real role card (slide 5). */
@@ -82,9 +83,12 @@ export default function SwipePreview() {
   }, []);
 
   const commit = useCallback(
-    (dir: Dir, byUser: boolean) => {
+    (dir: Dir, by: 'button' | 'gesture' | 'auto') => {
       if (exit) return;
-      if (byUser) resumeAt.current = Date.now() + 8000; // give the visitor the wheel for a while
+      if (by !== 'auto') {
+        resumeAt.current = Date.now() + 8000; // give the visitor the wheel for a while
+        track('landing_demo_swiped', { decision: dir === 'yes' ? 'interested' : 'pass', method: by });
+      }
       setDragging(false);
       draggingRef.current = false;
       setExit(dir);
@@ -109,7 +113,7 @@ export default function SwipePreview() {
     if (reduced || paused) return;
     const t = window.setInterval(() => {
       if (!visible.current || draggingRef.current || Date.now() < resumeAt.current) return;
-      commit(SCRIPT[i % SCRIPT.length], false);
+      commit(SCRIPT[i % SCRIPT.length], 'auto');
     }, AUTOPLAY_MS);
     return () => window.clearInterval(t);
   }, [reduced, paused, commit, i]);
@@ -130,8 +134,8 @@ export default function SwipePreview() {
     draggingRef.current = false;
     setDragging(false);
     const offset = e.clientX - startX.current;
-    if (offset > 80) commit('yes', true);
-    else if (offset < -80) commit('no', true);
+    if (offset > 80) commit('yes', 'gesture');
+    else if (offset < -80) commit('no', 'gesture');
     else setDx(0);
   }
 
@@ -227,14 +231,14 @@ export default function SwipePreview() {
         </div>
 
         <div className={s.previewActions}>
-          <button type="button" className={s.roundBtn} aria-label="Pass on this sample role" onClick={() => commit('no', true)}>
+          <button type="button" className={s.roundBtn} aria-label="Pass on this sample role" onClick={() => commit('no', 'button')}>
             <Cross size={22} />
           </button>
           <button
             type="button"
             className={`${s.roundBtn} ${s.roundBtnYes}`}
             aria-label="Interested in this sample role"
-            onClick={() => commit('yes', true)}
+            onClick={() => commit('yes', 'button')}
           >
             <Heart size={26} />
           </button>

@@ -1,24 +1,31 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Noto_Sans_Devanagari, Playfair_Display } from 'next/font/google';
+import { Caladea, Carlito, Noto_Sans_Devanagari } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import { AppStoreProvider } from '@/store/AppStore';
 import ZoneGuard from '@/components/ZoneGuard';
 import Notice from '@/components/Notice';
 import ResetDemo from '@/components/ResetDemo';
 
-const sans = Inter({
+/**
+ * Deck type system: Cambria (display) + Calibri (body). Those are Microsoft
+ * fonts, requested by name first in globals.css; Caladea and Carlito are their
+ * metric-compatible open equivalents, self-hosted here for everyone else.
+ */
+const serif = Caladea({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
-const serif = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '700'],
   style: ['normal', 'italic'],
   display: 'swap',
-  variable: '--font-playfair',
+  variable: '--font-caladea',
+});
+
+const sans = Carlito({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-carlito',
 });
 
 const devanagari = Noto_Sans_Devanagari({
@@ -38,7 +45,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#813502',
+  themeColor: '#2F3C7E',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -50,6 +57,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Notice />
           <ResetDemo />
         </AppStoreProvider>
+        {/* Page views (cookieless). Custom product events go through src/lib/analytics.ts. */}
+        <Analytics />
       </body>
     </html>
   );

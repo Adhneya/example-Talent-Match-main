@@ -6,6 +6,7 @@ import { formatPay, roleMeta } from '@/lib/format';
 import { Bookmark } from '@/components/Icons';
 import { ApplyOutButton, SourceBadge } from '@/components/RoleCard';
 import { detailNav } from '@/components/swipe/SwipeDeck';
+import { track } from '@/lib/analytics';
 
 /**
  * Saved — where Interested lands for aggregated roles. Those roles are
@@ -68,12 +69,19 @@ export default function SavedPage() {
                   <ApplyOutButton
                     role={r}
                     className={done ? 'btn' : 'btn btn--primary'}
-                    onApply={() => markApplied(r.id)}
+                    onApply={() => {
+                      markApplied(r.id);
+                      if (r.source.kind === 'aggregated')
+                        track('apply_out_clicked', { role_id: r.id, source: r.source.name, from: 'saved' });
+                    }}
                   />
                   <Link href={`/swipe/${r.id}`} className="btn" onClick={() => (detailNav.openedInApp = true)}>
                     Details
                   </Link>
-                  <button className="btn btn--ghost" onClick={() => removeSaved(r.id)}>
+                  <button className="btn btn--ghost" onClick={() => {
+                      removeSaved(r.id);
+                      track('saved_removed', { role_id: r.id });
+                    }}>
                     Remove
                   </button>
                 </div>

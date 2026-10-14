@@ -30,8 +30,8 @@ export function RoleSummary({ role }: { role: Role }) {
 /** Pay is a first-class card region, shown immediately (slide 5). */
 export function PayRangePanel({ role }: { role: Role }) {
   if (!role.pay) {
-    // BLOCKED on open decision 4 (pay source when a listing omits it).
-    // Holding treatment: an honest, visibly different panel — never a blank region.
+    // Decision 4: roles without pay are filtered out of the deck, so this only shows
+    // for a direct link to such a role. Defensive fallback, not a designed state.
     return (
       <div className="pay pay--missing">
         <div className="pay__label">Pay range</div>

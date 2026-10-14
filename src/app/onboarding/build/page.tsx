@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/AppStore';
 import { PROCESSING_STEPS, ParseError, buildProfile } from '@/lib/api';
+import { track } from '@/lib/analytics';
 import { Tick } from '@/components/Icons';
 import ProfileConfirmCard from '@/components/ProfileConfirmCard';
 import type { Profile } from '@/lib/types';
@@ -31,15 +32,19 @@ function ProcessingState() {
 
   useEffect(() => {
     const c = new AbortController();
+    const startedAt = Date.now();
     ctrl.current = c;
     setFailed(null);
     setStep(0);
     buildProfile(draft, setStep, c.signal).then(
       (p) => {
-        if (!c.signal.aborted) setGenerated(p);
+        if (c.signal.aborted) return;
+        track('profile_build_succeeded', { duration_ms: Date.now() - startedAt });
+        setGenerated(p);
       },
       (err) => {
         if (c.signal.aborted) return;
+        track('profile_build_failed');
         setFailed(err instanceof ParseError ? err.message : 'Something went wrong while building your profile.');
       },
     );
@@ -135,6 +140,7 @@ function ConfirmState({ initial, alreadyConfirmed }: { initial: Profile; already
         className="btn btn--primary btn--lg btn--block"
         style={{ marginTop: 24 }}
         onClick={() => {
+          if (!alreadyConfirmed) track('profile_confirmed', { edited: JSON.stringify(p) !== JSON.stringify(initial) });
           confirmProfile(p);
           router.push('/onboarding/target');
         }}
