@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { pdf, readState, topCard } from './helpers';
+import { TEST_USER, pdf, readState, signIn, topCard } from './helpers';
 
 test.describe('Onboarding (S-01 → S-05)', () => {
-  test('connect validates input, recovers from a parse failure, confirms, and lands in the deck', async ({ page }) => {
+  test('connect signs in, validates the resume, recovers from a parse failure, confirms, and lands in the deck', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Swipe on roles.');
     await page.getByRole('link', { name: 'Find Roles' }).first().click();
@@ -11,18 +11,21 @@ test.describe('Onboarding (S-01 → S-05)', () => {
     const build = page.getByRole('button', { name: 'Build my profile' });
     await expect(build).toBeDisabled();
 
-    // Slide 3: only a URL paste and a file — and both are validated.
-    const url = page.getByLabel('LinkedIn profile URL');
-    await url.fill('not a link');
-    await url.blur();
-    await expect(page.getByText('it looks like linkedin.com/in/your-name')).toBeVisible();
+    // Slide 3: Sign in with LinkedIn and a file — nothing typed by hand. The resume waits for sign-in.
+    await expect(page.getByRole('button', { name: 'Continue with LinkedIn' })).toBeVisible();
+    await expect(page.locator('input[type="file"]')).toBeDisabled();
+    await expect(page.getByLabel('LinkedIn profile URL')).toHaveCount(0); // the URL paste is gone
+
+    // LinkedIn can't be driven in tests: the test-only provider stands in for the round trip.
+    await signIn(page);
+    await page.reload();
+    await expect(page.getByText(TEST_USER.name)).toBeVisible();
+    await expect(page.getByText('Signed in with LinkedIn')).toBeVisible();
 
     const file = page.locator('input[type="file"]');
     await file.setInputFiles({ name: 'resume.txt', mimeType: 'text/plain', buffer: Buffer.from('x') });
     await expect(page.getByText('isn’t supported. Upload a PDF or DOCX file.')).toBeVisible();
 
-    // A link pasted without https:// is accepted (regression: native URL validation blocked it).
-    await url.fill('linkedin.com/in/jordan-rivera');
     await file.setInputFiles(pdf('unreadable-scan.pdf'));
     await expect(build).toBeEnabled();
     await build.click();
@@ -31,7 +34,7 @@ test.describe('Onboarding (S-01 → S-05)', () => {
     await expect(page.getByRole('heading', { name: 'We couldn’t read that resume.' })).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Upload a different resume' }).click();
     await expect(page).toHaveURL(/\/onboarding\/connect$/);
-    await expect(url).toHaveValue('https://www.linkedin.com/in/jordan-rivera');
+    await expect(page.getByText('Signed in with LinkedIn')).toBeVisible(); // still signed in
 
     await page.locator('input[type="file"]').setInputFiles(pdf('Jordan_Rivera_Resume.pdf'));
     await page.getByRole('button', { name: 'Build my profile' }).click();
@@ -71,7 +74,8 @@ test.describe('Onboarding (S-01 → S-05)', () => {
 
     await page.goto('/');
     await page.getByRole('link', { name: 'Find Roles' }).first().click();
-    await page.getByLabel('LinkedIn profile URL').fill('linkedin.com/in/jordan-rivera');
+    await signIn(page); // stands in for the LinkedIn round trip (a few seconds for a real person)
+    await page.reload();
     await page.locator('input[type="file"]').setInputFiles(pdf('resume.pdf'));
     await page.getByRole('button', { name: 'Build my profile' }).click();
     mark('connect');

@@ -23,7 +23,15 @@ export function scrollToHash(e: React.MouseEvent, hash: string, focusSelector?: 
   target?.focus({ preventScroll: true });
 }
 
-export default function LandingHeader({ resumeHref, resuming }: { resumeHref: string; resuming: boolean }) {
+export default function LandingHeader({
+  resumeHref,
+  loginHref,
+  resuming,
+}: {
+  resumeHref: string;
+  loginHref: string;
+  resuming: boolean;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const menuBtn = useRef<HTMLButtonElement | null>(null);
@@ -47,7 +55,7 @@ export default function LandingHeader({ resumeHref, resuming }: { resumeHref: st
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // "Log In" resumes saved progress — there is no account system yet.
+  // "Log In" is Sign in with LinkedIn (/signin); signed in already, it resumes.
   const loginLabel = 'Log In';
 
   return (
@@ -68,7 +76,7 @@ export default function LandingHeader({ resumeHref, resuming }: { resumeHref: st
 
         <div className={s.actions}>
           <Link
-            href={resumeHref}
+            href={loginHref}
             className={`${s.cta} ${s.ctaGhost} ${s.ctaSm} ${s.loginDesktop}`}
             title={resuming ? 'Pick up where you left off' : undefined}
             onClick={() => track('landing_cta_clicked', { cta: 'log_in', location: 'header' })}
@@ -115,7 +123,7 @@ export default function LandingHeader({ resumeHref, resuming }: { resumeHref: st
           ))}
           <div className={s.menuDivider} />
           <Link
-            href={resumeHref}
+            href={loginHref}
             className={s.menuLink}
             onClick={() => track('landing_cta_clicked', { cta: 'log_in', location: 'menu' })}
           >

@@ -10,9 +10,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useSession } from 'next-auth/react';
 import { FLAGS } from '@/lib/flags';
 import { employerSwipedRight, getRole, postSwipe, uid } from '@/lib/api';
 import { track, type SwipeMethod } from '@/lib/analytics';
+import { takePendingSignIn } from '@/lib/session';
 import type { Decision, Match, OnboardingDraft, Profile, Role, SwipeRecord } from '@/lib/types';
 
 /**
@@ -24,12 +26,21 @@ import type { Decision, Match, OnboardingDraft, Profile, Role, SwipeRecord } fro
  *   saved    — derived: aggregated roles marked Interested, minus removals
  * The deck itself is server-fetched and buffered by the deck component.
  *
- * Until a backend exists, the "server" domains persist to localStorage.
+ * Until a backend exists, the "server" domains persist to localStorage, under
+ * a key namespaced by the signed-in LinkedIn user, so two people sharing a
+ * browser never see each other's data. Signed out, the state is empty.
  */
 
 export interface Sources {
-  linkedinUrl: string;
   resumeName: string;
+}
+
+/** The signed-in candidate, from Sign in with LinkedIn. Identity only — never sent to analytics. */
+export interface SessionUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
 }
 
 interface Persisted {
@@ -50,7 +61,7 @@ export interface Notice {
   text: string;
 }
 
-const EMPTY_DRAFT: OnboardingDraft = { linkedinUrl: '', resume: null, generated: null };
+const EMPTY_DRAFT: OnboardingDraft = { resume: null, generated: null };
 
 const EMPTY: Persisted = {
   draft: EMPTY_DRAFT,
@@ -64,18 +75,35 @@ const EMPTY: Persisted = {
   notificationsSeenAt: 0,
 };
 
-const STORAGE_KEY = 'talentmatch.v1';
+export const storageKey = (userId: string) => `talentmatch.v1:${userId}`;
+/** Pre-sign-in storage. The first account to sign in on this browser adopts it. */
+const LEGACY_KEY = 'talentmatch.v1';
+
+function load(userId: string): Persisted {
+  try {
+    const key = storageKey(userId);
+    let raw = window.localStorage.getItem(key);
+    if (!raw && (raw = window.localStorage.getItem(LEGACY_KEY))) {
+      window.localStorage.setItem(key, raw);
+      window.localStorage.removeItem(LEGACY_KEY);
+    }
+    if (raw) return { ...EMPTY, ...JSON.parse(raw) };
+  } catch {
+    /* ignore malformed storage */
+  }
+  return EMPTY;
+}
 
 /**
- * Where the candidate is in the product. Zones are gated by profile state,
- * not by authentication — the deck never introduces an account step.
+ * Where the candidate is in onboarding. Signing in is part of Connect, so a
+ * signed-out visitor is always 'new'; ZoneGuard combines stage with the session.
  */
 export type Stage = 'new' | 'connected' | 'confirmed' | 'live';
 
 export function stageOf(s: Pick<Persisted, 'draft' | 'profile' | 'targetRoleId'>): Stage {
   if (s.profile && s.targetRoleId) return 'live';
   if (s.profile) return 'confirmed';
-  if (s.draft.linkedinUrl && s.draft.resume) return 'connected';
+  if (s.draft.resume) return 'connected';
   return 'new';
 }
 
@@ -90,7 +118,9 @@ export function effectiveDecisions(records: SwipeRecord[]) {
 }
 
 interface StoreValue extends Persisted {
+  /** Session resolved and this user's storage loaded. */
   hydrated: boolean;
+  user: SessionUser | null;
   stage: Stage;
   pending: SwipeRecord[];
   decisions: Map<string, { recordId: string; decision: Decision }>;
@@ -99,7 +129,7 @@ interface StoreValue extends Persisted {
   notice: Notice | null;
   celebrate: string | null;
 
-  setConnect: (linkedinUrl: string, resume: { name: string; size: number }) => void;
+  setConnect: (resume: { name: string; size: number }) => void;
   setGenerated: (p: Profile | null) => void;
   confirmProfile: (p: Profile) => void;
   chooseTarget: (targetRoleId: string) => void;
@@ -118,32 +148,49 @@ interface StoreValue extends Persisted {
 const StoreContext = createContext<StoreValue | null>(null);
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
   const [state, setState] = useState<Persisted>(EMPTY);
-  const [hydrated, setHydrated] = useState(false);
+  // Which user's storage `state` holds: undefined until loaded, null when signed out.
+  const [loadedFor, setLoadedFor] = useState<string | null | undefined>(undefined);
   const [pending, setPending] = useState<SwipeRecord[]>([]);
   const [lastDecision, setLastDecision] = useState<StoreValue['lastDecision']>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [celebrate, setCelebrate] = useState<string | null>(null);
   const noticeTimer = useRef<number | undefined>(undefined);
 
+  const sessionUser = session?.user;
+  const userId = status === 'authenticated' ? (sessionUser?.id ?? null) : null;
+  const user = useMemo<SessionUser | null>(
+    () =>
+      userId
+        ? { id: userId, name: sessionUser?.name ?? null, email: sessionUser?.email ?? null, image: sessionUser?.image ?? null }
+        : null,
+    [userId, sessionUser?.name, sessionUser?.email, sessionUser?.image],
+  );
+  const hydrated = status !== 'loading' && loadedFor === userId;
+
+  // (Re)load whenever the signed-in user changes, including sign-in and sign-out.
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setState({ ...EMPTY, ...JSON.parse(raw) });
-    } catch {
-      /* ignore malformed storage */
+    if (status === 'loading') return;
+    setState(userId ? load(userId) : EMPTY);
+    setPending([]);
+    setLastDecision(null);
+    setCelebrate(null);
+    setLoadedFor(userId);
+    if (userId) {
+      const provider = takePendingSignIn();
+      if (provider) track('sign_in_succeeded', { provider });
     }
-    setHydrated(true);
-  }, []);
+  }, [status, userId]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !userId) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(storageKey(userId), JSON.stringify(state));
     } catch {
       /* ignore quota / privacy-mode errors */
     }
-  }, [state, hydrated]);
+  }, [state, hydrated, userId]);
 
   const flash = useCallback((tone: Notice['tone'], text: string) => {
     window.clearTimeout(noticeTimer.current);
@@ -225,14 +272,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // Functional updates only, so these are stable for the provider's lifetime.
   const actions = useMemo(
     () => ({
-      setConnect: (linkedinUrl: string, resume: { name: string; size: number }) =>
-        setState((s) => ({ ...s, draft: { linkedinUrl, resume, generated: null } })),
+      setConnect: (resume: { name: string; size: number }) =>
+        setState((s) => ({ ...s, draft: { resume, generated: null } })),
       setGenerated: (generated: Profile | null) => setState((s) => ({ ...s, draft: { ...s.draft, generated } })),
       confirmProfile: (profile: Profile) =>
         setState((s) => ({
           ...s,
           profile,
-          sources: { linkedinUrl: s.draft.linkedinUrl, resumeName: s.draft.resume?.name ?? '' },
+          sources: { resumeName: s.draft.resume?.name ?? '' },
         })),
       // Onboarding ends at Target, so the draft is cleared here rather than at confirm.
       chooseTarget: (targetRoleId: string) => setState((s) => ({ ...s, targetRoleId, draft: EMPTY_DRAFT })),
@@ -250,16 +297,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       markNotificationsSeen: () => setState((s) => ({ ...s, notificationsSeenAt: Date.now() })),
       dismissNotice: () => setNotice(null),
       clearCelebrate: () => setCelebrate(null),
+      // Clears this user's data; the persistence effect writes the empty state back.
       reset: () => {
         setState(EMPTY);
         setPending([]);
         setLastDecision(null);
         setCelebrate(null);
-        try {
-          window.localStorage.removeItem(STORAGE_KEY);
-        } catch {
-          /* ignore */
-        }
       },
     }),
     [],
@@ -269,6 +312,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       hydrated,
+      user,
       stage: stageOf(state),
       pending,
       decisions,
@@ -280,7 +324,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       undo,
       ...actions,
     }),
-    [state, hydrated, pending, decisions, lastDecision, savedRoles, notice, celebrate, decide, undo, actions],
+    [state, hydrated, user, pending, decisions, lastDecision, savedRoles, notice, celebrate, decide, undo, actions],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

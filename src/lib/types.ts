@@ -60,8 +60,8 @@ export interface Profile {
   salary: Salary;
 }
 
+/** Identity comes from Sign in with LinkedIn (the session), so the draft is just the resume. */
 export interface OnboardingDraft {
-  linkedinUrl: string;
   resume: { name: string; size: number } | null;
   generated: Profile | null;
 }

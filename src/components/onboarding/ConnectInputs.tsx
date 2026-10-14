@@ -1,50 +1,41 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
-import { Doc, Tick, Upload } from '@/components/Icons';
+import { Doc, LinkedInMark, Tick, Upload } from '@/components/Icons';
+import LinkedInButton from '@/components/LinkedInButton';
 import { track } from '@/lib/analytics';
+import type { SessionUser } from '@/store/AppStore';
 
-/* ── LinkedIn URL ──────────────────────────────────────────────── */
+/* ── LinkedIn (Sign in with LinkedIn — decision "Auth") ─────────── */
 
-const LINKEDIN = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([A-Za-z0-9\-_%]{3,100})\/?(?:[?#].*)?$/i;
-
-/** Returns the canonical profile URL, or null if the input isn't a LinkedIn profile link. */
-export function normalizeLinkedIn(raw: string): string | null {
-  const m = raw.trim().match(LINKEDIN);
-  return m ? `https://www.linkedin.com/in/${m[1]}` : null;
-}
-
-export function LinkedInUrlField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const id = useId();
-  const [touched, setTouched] = useState(false);
-  const valid = normalizeLinkedIn(value) !== null;
-  const showError = touched && value.trim() !== '' && !valid;
-
+/**
+ * Step one of Connect. It replaces the old "paste your LinkedIn URL" field, so
+ * onboarding still asks for exactly two things (slide 3).
+ */
+export function LinkedInStep({ user, onSignOut }: { user: SessionUser | null; onSignOut: () => void }) {
   return (
     <div className="field">
-      <label htmlFor={id}>LinkedIn profile URL</label>
-      <input
-        id={id}
-        className="input"
-        type="text" // not "url": native validation would reject links pasted without https://
-        inputMode="url"
-        autoComplete="url"
-        autoCapitalize="none"
-        spellCheck={false}
-        placeholder="linkedin.com/in/your-name"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setTouched(true)}
-        aria-invalid={showError}
-        aria-describedby={`${id}-msg`}
-      />
-      <span id={`${id}-msg`} className={`field__msg ${showError ? 'field__msg--error' : valid ? 'field__msg--ok' : 't-fine'}`}>
-        {showError
-          ? 'Paste the link to your profile — it looks like linkedin.com/in/your-name.'
-          : valid
-            ? 'Profile link looks good.'
-            : 'Paste it straight from your browser’s address bar.'}
-      </span>
+      <span className="field__label">LinkedIn</span>
+      {user ? (
+        <div className="account-chip">
+          <LinkedInMark size={22} style={{ color: 'var(--linkedin)' }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.name ?? 'Signed in'}
+            </div>
+            <div className="t-fine">Signed in with LinkedIn</div>
+          </div>
+          <Tick size={20} style={{ color: 'var(--success)' }} />
+          <button type="button" className="btn btn--ghost" onClick={onSignOut}>
+            Not you?
+          </button>
+        </div>
+      ) : (
+        <>
+          <LinkedInButton location="connect" redirectTo="/onboarding/connect" />
+          <span className="field__msg t-fine">We use it to sign you in. Nothing is posted to LinkedIn.</span>
+        </>
+      )}
     </div>
   );
 }
@@ -67,9 +58,12 @@ function sizeLabel(bytes: number) {
 export function ResumeDropzone({
   value,
   onChange,
+  disabled = false,
 }: {
   value: { name: string; size: number } | null;
   onChange: (v: { name: string; size: number } | null) => void;
+  /** Before sign-in: the resume has no one to belong to yet. */
+  disabled?: boolean;
 }) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -94,6 +88,7 @@ export function ResumeDropzone({
       id={id}
       type="file"
       accept={ACCEPT_ATTR}
+      disabled={disabled}
       className="sr-only"
       aria-describedby={`${id}-msg`}
       onChange={(e) => {
@@ -127,23 +122,23 @@ export function ResumeDropzone({
       ) : (
         <label
           htmlFor={id}
-          className={`dropzone${over ? ' dropzone--over' : ''}`}
+          className={`dropzone${over ? ' dropzone--over' : ''}${disabled ? ' dropzone--disabled' : ''}`}
           aria-invalid={!!rejected}
           aria-labelledby={`${id}-label`}
           onDragOver={(e) => {
             e.preventDefault();
-            setOver(true);
+            if (!disabled) setOver(true);
           }}
           onDragLeave={() => setOver(false)}
           onDrop={(e) => {
             e.preventDefault();
             setOver(false);
-            take(e.dataTransfer.files?.[0]);
+            if (!disabled) take(e.dataTransfer.files?.[0]);
           }}
         >
           <Upload size={28} style={{ color: 'var(--navy)' }} />
           <span style={{ fontWeight: 600, color: 'var(--ink)' }}>Drop your resume here, or browse</span>
-          <span className="t-fine">PDF or DOCX</span>
+          <span className="t-fine">{disabled ? 'Sign in with LinkedIn first · PDF or DOCX' : 'PDF or DOCX'}</span>
           {input}
         </label>
       )}

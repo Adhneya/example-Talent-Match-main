@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { liveState, pdf, seed, topCard } from './helpers';
+import { liveState, pdf, seed, signIn, topCard } from './helpers';
 
 /** Events captured by the debug sink (NEXT_PUBLIC_ANALYTICS_DEBUG=1 in e2e/serve.mjs). */
 type Captured = { name: string; props: Record<string, unknown> };
@@ -8,9 +8,10 @@ const named = async (page: Page, name: string) => (await events(page)).filter((e
 
 test.describe('Event layer (IA §1 Phase 2 extension point)', () => {
   test('onboarding funnel is tracked end to end, with no personal data in any event', async ({ page }) => {
+    // Signed in up front: a reload after sign-in would empty the in-page event buffer.
+    await signIn(page);
     await page.goto('/');
     await page.getByRole('link', { name: 'Find Roles' }).first().click();
-    await page.getByLabel('LinkedIn profile URL').fill('linkedin.com/in/jordan-rivera');
     await page.locator('input[type="file"]').setInputFiles(pdf('Jordan_Rivera_Resume.pdf'));
     await page.getByRole('button', { name: 'Build my profile' }).click();
     await expect(page.getByRole('heading', { name: 'Here’s your profile' })).toBeVisible({ timeout: 10_000 });
@@ -48,7 +49,7 @@ test.describe('Event layer (IA §1 Phase 2 extension point)', () => {
 
     // Privacy: ids, enums, counts and durations only.
     const payload = JSON.stringify(all).toLowerCase();
-    for (const pii of ['linkedin.com', 'jordan', 'rivera', '.pdf', '@']) expect(payload).not.toContain(pii);
+    for (const pii of ['linkedin.com', 'jordan', 'rivera', '.pdf', '@', 'example.test']) expect(payload).not.toContain(pii);
   });
 
   test('swipes record their method; undo and rejected files are tracked', async ({ page }) => {
@@ -73,6 +74,7 @@ test.describe('Event layer (IA §1 Phase 2 extension point)', () => {
   });
 
   test('a rejected resume file logs only its extension', async ({ page }) => {
+    await signIn(page);
     await page.goto('/onboarding/connect');
     await page.locator('input[type="file"]').setInputFiles({ name: 'my-cv.txt', mimeType: 'text/plain', buffer: Buffer.from('x') });
     const [rejected] = await named(page, 'connect_file_rejected');

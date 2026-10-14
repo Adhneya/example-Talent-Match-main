@@ -25,7 +25,7 @@ async function scan(page: Page, ready: () => Promise<void>) {
 }
 
 const connected = {
-  draft: { linkedinUrl: 'https://www.linkedin.com/in/jordan-rivera', resume: { name: 'resume.pdf', size: 1000 }, generated: PROFILE },
+  draft: { resume: { name: 'resume.pdf', size: 1000 }, generated: PROFILE },
   sources: null,
   profile: null,
   targetRoleId: null,
@@ -37,9 +37,20 @@ test.describe('Accessibility (axe, WCAG 2.1 AA)', () => {
     await scan(page, () => expect(page.getByRole('heading', { level: 1 })).toBeVisible());
   });
 
-  test('Connect', async ({ page }) => {
+  test('Connect (signed out)', async ({ page }) => {
     await page.goto('/onboarding/connect');
-    await scan(page, () => expect(page.getByRole('heading', { name: 'Connect your experience' })).toBeVisible());
+    await scan(page, () => expect(page.getByRole('button', { name: 'Continue with LinkedIn' })).toBeVisible());
+  });
+
+  test('Connect (signed in)', async ({ page }) => {
+    await seed(page, liveState({ profile: null, targetRoleId: null, sources: null }));
+    await page.goto('/onboarding/connect');
+    await scan(page, () => expect(page.getByText('Signed in with LinkedIn')).toBeVisible());
+  });
+
+  test('Sign in, with an error', async ({ page }) => {
+    await page.goto('/signin?error=OAuthCallbackError');
+    await scan(page, () => expect(page.getByRole('alert').filter({ hasText: 'Sign-in' })).toBeVisible());
   });
 
   test('Confirm profile', async ({ page }) => {

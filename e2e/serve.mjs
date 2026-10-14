@@ -15,7 +15,22 @@ const targets = [
 ];
 
 // NEXT_PUBLIC_ANALYTICS_DEBUG exposes tracked events on window.__TM_EVENTS__ for e2e/analytics.spec.ts.
-const envFor = (t) => ({ ...process.env, ...t.env, NEXT_DIST_DIR: t.dist, NEXT_PUBLIC_ANALYTICS_DEBUG: '1' });
+// Auth: dummy values only. AUTH_TEST_SIGNIN enables the fake "test" sign-in (never on Vercel —
+// see src/auth.ts); the LinkedIn id lets e2e/auth.spec.ts check the redirect to LinkedIn.
+const AUTH_ENV = {
+  AUTH_SECRET: 'e2e-only-secret-not-used-anywhere-else-0123456789',
+  AUTH_TRUST_HOST: 'true',
+  AUTH_TEST_SIGNIN: '1',
+  AUTH_LINKEDIN_ID: 'e2e-linkedin-client-id',
+  AUTH_LINKEDIN_SECRET: 'e2e-linkedin-client-secret',
+};
+const envFor = (t) => ({
+  ...process.env,
+  ...AUTH_ENV,
+  ...t.env,
+  NEXT_DIST_DIR: t.dist,
+  NEXT_PUBLIC_ANALYTICS_DEBUG: '1',
+});
 
 for (const t of targets) {
   console.log(`[serve] building ${t.dist}`);

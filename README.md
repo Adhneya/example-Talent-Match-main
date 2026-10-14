@@ -13,6 +13,26 @@ npm run dev
 
 Then open http://localhost:3000. Use **↻ Reset (dev)** (bottom-left, dev builds only) to start over.
 
+`npm run dev` needs an `AUTH_SECRET` in `.env.local` (see [`.env.example`](.env.example)). Without
+LinkedIn credentials, use **Continue as test user (dev only)** on Connect or Sign in.
+
+## Sign in with LinkedIn — setup
+
+Candidates sign in with LinkedIn (OpenID Connect, via [Auth.js](https://authjs.dev)). LinkedIn
+gives identity only — name, email, photo — so the profile itself is built from the resume
+(decision Auth-2).
+
+1. At https://developer.linkedin.com create an app and add the product
+   **Sign In with LinkedIn using OpenID Connect**.
+2. Under **Auth → Authorized redirect URLs**, add
+   `http://localhost:3000/api/auth/callback/linkedin` and the same path on each Vercel domain
+   (e.g. `https://<your-app>.vercel.app/api/auth/callback/linkedin`).
+3. Put `AUTH_LINKEDIN_ID`, `AUTH_LINKEDIN_SECRET` (from the app's Auth tab) and `AUTH_SECRET`
+   (`npx auth secret`) in `.env.local`, and in **Vercel → Settings → Environment Variables**.
+
+The **test user** sign-in exists only in `next dev` and the E2E suite (`AUTH_TEST_SIGNIN=1`);
+it is never enabled on Vercel.
+
 ## Phasing and flags
 
 | Phase | Contents | Status |
@@ -28,7 +48,8 @@ Put the flags in `.env.local` and restart `npm run dev`. With a flag off, its ro
 | Route | Screen | Zone |
 |---|---|---|
 | `/` | S-01 Welcome | A · no profile |
-| `/onboarding/connect` | S-02 Connect — LinkedIn URL + resume (PDF/DOCX) | B · onboarding |
+| `/signin` | Sign in with LinkedIn — returning candidates, deep links, sign-in errors | A · public |
+| `/onboarding/connect` | S-02 Connect — Continue with LinkedIn + resume (PDF/DOCX) | B · onboarding (public until signed in) |
 | `/onboarding/build` | S-03 Processing → S-04 blocking confirm | B |
 | `/onboarding/target` | S-05 Target role (replaces into the deck) | B |
 | `/swipe` | S-06 Swipe deck | C · profile live |
@@ -38,24 +59,29 @@ Put the flags in `.env.local` and restart `npm run dev`. With a flag off, its ro
 | `/matches`, `/matches/[matchId]` | S-09 / S-10 (Phase 1) | C |
 | `/notifications` | S-12 (Phase 2) | C |
 
-Access is decided by profile stage, not auth (the deck has no account step). That
-assumption lives in one place — `src/components/ZoneGuard.tsx` — so real auth can replace it.
+Access is decided in one place — `src/components/ZoneGuard.tsx` — from the session plus the
+onboarding stage. Welcome, Sign in and Connect are public; Build, Target and the app need a
+signed-in candidate (signed out, `/swipe/...` goes to `/signin` and comes back after).
 
 ## Structure
 
 ```
 src/
-  app/                    routes (see table); (shell) is the Zone C layout
+  auth.ts                 Auth.js config: LinkedIn provider, JWT session, dev/test sign-in
+  app/                    routes (see table); (shell) is the Zone C layout; api/auth = Auth.js
   components/
     swipe/                SwipeDeck (CardStack, UndoControl, empty state), RoleDetailSheet
-    onboarding/           LinkedInUrlField, ResumeDropzone
+    onboarding/           LinkedInStep, ResumeDropzone
+    LinkedInButton        Continue with LinkedIn (+ dev-only test user)
     ProfileConfirmCard    EditableField, SkillTagGroup, StandoutHighlight, SalaryExpectationField
     RoleCard              CompanyHeader, RoleSummary, PayRangePanel, SourceBadge, ApplyOutButton
     ZoneGuard, Header (+ BottomNav), MatchCelebrationModal, EngagementStatus, Notice
-  store/AppStore.tsx      state domains: draft, profile, append-only swipe ledger, matches
+  store/AppStore.tsx      state domains: draft, profile, append-only swipe ledger, matches —
+                          stored per signed-in user (localStorage `talentmatch.v1:<user id>`)
   lib/
     types.ts              data contracts (role source discriminator, swipe records, …)
     api.ts                mock service layer (latency, failure injection, rules-based ranking)
+    session.ts            client sign-in / sign-out helpers (+ analytics)
     flags.ts, format.ts, fixtures/roles.ts
 ```
 
@@ -95,10 +121,10 @@ A resume whose filename contains `unreadable` also fails to parse.
 - **Product events:** one typed catalogue in `src/lib/analytics.ts` — landing CTAs, the onboarding
   funnel (including real time-to-complete against the 2-minute budget), card impressions, swipes
   with their method (button / gesture / keyboard / detail), undo, failures, detail opens,
-  apply-outs, saves and matches. Sent as Vercel custom events (custom events need a Vercel
+  apply-outs, saves, matches, and sign-in started / succeeded / failed / sign-out. Sent as Vercel custom events (custom events need a Vercel
   Pro or Enterprise plan; on Hobby only page views are recorded).
-- **Privacy:** events carry ids, enums, counts and durations only — never emails, LinkedIn URLs
-  or file names. An e2e test enforces this.
+- **Privacy:** events carry ids, enums, counts and durations only — never names, emails,
+  LinkedIn ids or file names. An e2e test enforces this.
 - **Debugging:** build with `NEXT_PUBLIC_ANALYTICS_DEBUG=1` to log events to the console and
   collect them on `window.__TM_EVENTS__`.
 

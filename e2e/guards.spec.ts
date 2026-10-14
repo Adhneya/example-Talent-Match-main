@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { liveState, seed } from './helpers';
 
-test.describe('Route guard (profile stage, no auth step)', () => {
-  test('a new visitor is sent back from the app and from later onboarding steps', async ({ page }) => {
+test.describe('Route guard (session + profile stage)', () => {
+  test('a signed-out visitor is sent to sign in from the app, and to Connect from later onboarding steps', async ({ page }) => {
     await page.goto('/swipe');
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/signin\?callbackUrl=%2Fswipe$/);
     await page.goto('/onboarding/build');
     await expect(page).toHaveURL(/\/onboarding\/connect$/);
     await page.goto('/onboarding/target');

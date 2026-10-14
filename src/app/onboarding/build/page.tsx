@@ -81,7 +81,7 @@ function ProcessingState() {
     <div className="reveal">
       <h1 className="t-h1">Building your profile</h1>
       <p className="t-lead" style={{ marginTop: 12 }}>
-        Reading {draft.resume?.name ?? 'your resume'} and your LinkedIn profile.
+        Reading {draft.resume?.name ?? 'your resume'}.
       </p>
 
       <div className="card" style={{ marginTop: 28, padding: '14px 20px' }}>

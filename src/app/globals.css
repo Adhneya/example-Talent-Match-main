@@ -37,6 +37,8 @@
   --bg: #ffffff;
   --danger: #c62828;
   --success: #1f7a4d;
+  --linkedin: #0a66c2; /* third-party brand colour, Sign in with LinkedIn only */
+  --linkedin-deep: #004182;
   --ring: 0 0 0 4px rgba(47, 60, 126, 0.22);
 
   /* ── Type scale ──────────────────────────────────────────── */
@@ -315,6 +317,16 @@ h4 {
 }
 .btn--block {
   width: 100%;
+}
+/* Sign in with LinkedIn: LinkedIn's own blue, per its button guidelines. White on #0A66C2 is 5.7:1. */
+.btn--linkedin {
+  background: var(--linkedin);
+  border-color: var(--linkedin);
+  color: #fff;
+}
+.btn--linkedin:hover {
+  background: var(--linkedin-deep);
+  border-color: var(--linkedin-deep);
 }
 .link {
   background: none;
@@ -693,6 +705,26 @@ textarea.input {
   border-color: var(--border);
   background: #fff;
   padding: 16px 18px;
+}
+/* Until the candidate signs in, the resume can't be attached to anyone. */
+.dropzone--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.dropzone--disabled:hover {
+  border-color: var(--neutral-2);
+  background: var(--tint);
+}
+
+/* Connect: who you're signed in as (the filled state of the LinkedIn step). */
+.account-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px 12px 18px;
 }
 
 .timeline {

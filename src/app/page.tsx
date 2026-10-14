@@ -17,7 +17,7 @@ import s from './_landing/landing.module.css';
 const PILLARS = [
   {
     title: 'Fast onboarding',
-    body: 'LinkedIn plus resume in, an optimized profile out — three steps, under two minutes.',
+    body: 'Sign in with LinkedIn, add your resume, get an optimized profile — three steps, under two minutes.',
     meta: '3 steps · ~2 min',
     icon: <Spark size={22} />,
   },
@@ -37,7 +37,7 @@ const PILLARS = [
 
 const TRUTHS = [
   { value: '3 steps', label: 'Connect, auto-build, target' },
-  { value: '~2 min', label: 'From LinkedIn to first swipe' },
+  { value: '~2 min', label: 'From sign-in to first swipe' },
   { value: '1 tap', label: 'To pass or say you’re interested' },
   { value: 'Mutual', label: 'A match means both said yes' },
 ];
@@ -68,9 +68,11 @@ const TALENT = [
 const delay = (ms: number) => ({ '--delay': `${ms}ms` }) as CSSProperties;
 
 export default function HomePage() {
-  const { stage } = useStore();
+  const { stage, user } = useStore();
   const resumeHref = RESUME[stage];
   const resuming = stage !== 'new';
+  // Returning candidates sign in with LinkedIn; once signed in, Log In just resumes.
+  const loginHref = user ? resumeHref : '/signin';
 
   // Scroll reveal: mark elements as shown once they enter the viewport.
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function HomePage() {
       <a href="#main" className={s.skip}>
         Skip to content
       </a>
-      <LandingHeader resumeHref={resumeHref} resuming={resuming} />
+      <LandingHeader resumeHref={resumeHref} loginHref={loginHref} resuming={resuming} />
 
       <main id="main">
         {/* ── Hero ─────────────────────────────────────────── */}
@@ -234,8 +236,8 @@ export default function HomePage() {
                   Built for the person <em>doing the swiping.</em>
                 </h2>
                 <p className={s.lead}>
-                  We turn your LinkedIn and resume into a structured profile, you check it over, and the deck is ranked
-                  for the role you’re after.
+                  Sign in with LinkedIn and we turn your resume into a structured profile. You check it over, and the
+                  deck is ranked for the role you’re after.
                 </p>
               </div>
               <ul className={s.features}>
@@ -255,7 +257,7 @@ export default function HomePage() {
             <div className={`${s.profileVisual} ${s.reveal}`} data-reveal style={delay(160)} aria-hidden="true">
               <div className={s.inputs}>
                 <span className={s.inputPill}>
-                  <span style={{ color: '#0a66c2', fontWeight: 800 }}>in</span> LinkedIn URL
+                  <span style={{ color: '#0a66c2', fontWeight: 800 }}>in</span> Sign in with LinkedIn
                 </span>
                 <span className={s.inputPill}>
                   <Doc size={14} /> resume.pdf
@@ -337,7 +339,7 @@ export default function HomePage() {
             <h2 id="final-title" className={s.h2}>
               Your next role is <em>one swipe</em> away.
             </h2>
-            <p className={s.lead}>Takes about two minutes. You’ll need your LinkedIn URL and a resume.</p>
+            <p className={s.lead}>Takes about two minutes. You’ll need a LinkedIn account and a resume.</p>
             <div className={s.finalCtas}>
               {findRoles('final')}
               {postRole('final')}

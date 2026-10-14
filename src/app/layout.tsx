@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Caladea, Carlito, Noto_Sans_Devanagari } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
+import { SessionProvider } from 'next-auth/react';
 import './globals.css';
 import { AppStoreProvider } from '@/store/AppStore';
 import ZoneGuard from '@/components/ZoneGuard';
@@ -38,7 +39,7 @@ const devanagari = Noto_Sans_Devanagari({
 export const metadata: Metadata = {
   title: 'TalentMatch — Swipe on roles. Match when it’s mutual.',
   description:
-    'LinkedIn and resume in, an optimized profile out. Swipe on live roles with the pay shown up front.',
+    'Sign in with LinkedIn, add your resume, get an optimized profile. Swipe on live roles with the pay shown up front.',
 };
 
 export const viewport: Viewport = {
@@ -52,11 +53,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} ${devanagari.variable}`}>
       <body>
-        <AppStoreProvider>
-          <ZoneGuard>{children}</ZoneGuard>
-          <Notice />
-          <ResetDemo />
-        </AppStoreProvider>
+        {/* Session is fetched client-side, so pages stay static and Welcome stays server-rendered. */}
+        <SessionProvider>
+          <AppStoreProvider>
+            <ZoneGuard>{children}</ZoneGuard>
+            <Notice />
+            <ResetDemo />
+          </AppStoreProvider>
+        </SessionProvider>
         {/* Page views (cookieless). Custom product events go through src/lib/analytics.ts. */}
         <Analytics />
       </body>

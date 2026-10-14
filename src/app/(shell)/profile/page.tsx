@@ -6,13 +6,15 @@ import ProfileConfirmCard from '@/components/ProfileConfirmCard';
 import RoleTargetPicker from '@/components/RoleTargetPicker';
 import type { Profile } from '@/lib/types';
 import { track } from '@/lib/analytics';
+import { endSession } from '@/lib/session';
+import { LinkedInMark } from '@/components/Icons';
 
 /**
  * S-11 Profile — derived from "confirm or tweak" (slide 3). Without it the
  * only edit moment would be a single step during onboarding.
  */
 export default function ProfilePage() {
-  const { profile, updateProfile, targetRoleId, chooseTarget, sources } = useStore();
+  const { profile, updateProfile, targetRoleId, chooseTarget, sources, user } = useStore();
   const [draft, setDraft] = useState<Profile | null>(profile);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -74,19 +76,34 @@ export default function ProfilePage() {
         />
       </section>
 
-      {sources && (
+      {sources?.resumeName && (
         <section style={{ marginTop: 40 }}>
           <h2 className="t-h3">Built from</h2>
           <dl className="card" style={{ marginTop: 14, padding: '16px 20px', display: 'grid', gap: 12 }}>
-            <div>
-              <dt className="t-label">LinkedIn</dt>
-              <dd style={{ margin: '2px 0 0', overflowWrap: 'anywhere' }}>{sources.linkedinUrl}</dd>
-            </div>
             <div>
               <dt className="t-label">Resume</dt>
               <dd style={{ margin: '2px 0 0' }}>{sources.resumeName}</dd>
             </div>
           </dl>
+        </section>
+      )}
+
+      {user && (
+        <section style={{ marginTop: 40 }}>
+          <h2 className="t-h3">Account</h2>
+          <div className="account-chip" style={{ marginTop: 14 }}>
+            <LinkedInMark size={22} style={{ color: 'var(--linkedin)' }} />
+            <div style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+              <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{user.name ?? 'Signed in'}</div>
+              <div className="t-fine">Signed in with LinkedIn{user.email ? ` · ${user.email}` : ''}</div>
+            </div>
+            <button type="button" className="btn" onClick={() => void endSession()}>
+              Sign out
+            </button>
+          </div>
+          <p className="t-fine" style={{ marginTop: 10 }}>
+            Your profile and saved roles stay on this device for when you sign back in.
+          </p>
         </section>
       )}
     </section>

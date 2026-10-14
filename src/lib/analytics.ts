@@ -18,6 +18,7 @@ import type { Decision } from './types';
 type SourceKind = 'aggregated' | 'native';
 export type SwipeMethod = 'button' | 'gesture' | 'keyboard' | 'detail';
 type OnboardingStep = 'connect' | 'build' | 'target';
+export type AuthProvider = 'linkedin' | 'test';
 
 /** The catalogue. Props must stay flat primitives (a Vercel custom-event constraint). */
 export interface EventMap {
@@ -25,6 +26,12 @@ export interface EventMap {
   landing_cta_clicked: { cta: 'find_roles' | 'post_role' | 'get_started' | 'log_in'; location: 'header' | 'hero' | 'talent' | 'final' | 'menu' };
   landing_demo_swiped: { decision: Decision; method: 'button' | 'gesture' };
   employer_interest_submitted: Record<string, never>;
+
+  // Auth (decision "Auth": Sign in with LinkedIn). Never the name, email or LinkedIn id.
+  sign_in_started: { provider: AuthProvider; location: 'connect' | 'signin' };
+  sign_in_succeeded: { provider: AuthProvider };
+  sign_in_failed: { reason: 'access_denied' | 'configuration' | 'other' };
+  sign_out: Record<string, never>;
 
   // Onboarding funnel (slide 3: 3 steps, under 2 minutes)
   onboarding_step_viewed: { step: OnboardingStep };
