@@ -24,7 +24,9 @@ export type AuthProvider = 'linkedin' | 'test';
 export interface EventMap {
   // Landing
   landing_cta_clicked: { cta: 'find_roles' | 'post_role' | 'get_started' | 'log_in'; location: 'header' | 'hero' | 'talent' | 'final' | 'menu' };
-  landing_demo_swiped: { decision: Decision; method: 'button' | 'gesture' };
+  landing_demo_swiped: { decision: Decision; method: 'button' | 'gesture' | 'keyboard' };
+  landing_swipe_preview_hover: Record<string, never>; // once per page view
+  landing_how_step_viewed: { step: 'upload' | 'match' | 'interview' }; // once per step per page view
   employer_interest_submitted: Record<string, never>;
 
   // Auth (decision "Auth": Sign in with LinkedIn). Never the name, email or LinkedIn id.

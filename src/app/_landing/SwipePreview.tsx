@@ -1,244 +1,312 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react';
+import * as m from 'motion/react-m';
 import { Cross, Heart } from '@/components/Icons';
 import { RoleCardFace } from '@/components/RoleCard';
+import { AGGREGATED_ROLES } from '@/lib/fixtures/roles';
 import { track } from '@/lib/analytics';
-import type { Role } from '@/lib/types';
-import s from './landing.module.css';
 
-type DemoRole = Pick<Role, 'company' | 'title' | 'summary' | 'pay' | 'postedDaysAgo'> & { match: boolean };
-const pay = (min: number, max: number): Role['pay'] => ({ min, max, currency: 'USD', period: 'year' });
+/**
+ * The hero's product demo: the app's real role cards (fixture inventory, pay-
+ * banded roles only — decision 4), fanned three deep. The top card tilts
+ * toward the pointer in 3D (≤ 8°), drags with spring physics, and flies off on
+ * a swipe; the card behind springs forward to take its place.
+ *
+ * TARGET_ROLES are role-family labels (no company, pay or summary), so they
+ * can't fill a card; AGGREGATED_ROLES is the card-shaped inventory.
+ */
+const ROLES = AGGREGATED_ROLES.filter((r) => r.pay);
 
-/** Sample cards for the hero demo — fictional companies, rendered by the app's own card face. */
-const DEMO: DemoRole[] = [
-  {
-    company: { name: 'Ledgerly', stage: 'Series C', sector: 'Fintech', location: 'Remote (US)' },
-    title: 'Senior Product Manager, Payments',
-    summary: 'Lead card issuing and usage-based billing for SMB finance teams.',
-    pay: pay(175000, 210000),
-    postedDaysAgo: 2,
-    match: true,
-  },
-  {
-    company: { name: 'Acme Freight', stage: 'Series B', sector: 'Logistics', location: 'San Francisco, CA' },
-    title: 'Senior Product Manager, Shipper Platform',
-    summary: 'Own the self-serve booking flow used by 4,000 mid-market shippers.',
-    pay: pay(165000, 195000),
-    postedDaysAgo: 3,
-    match: false,
-  },
-  {
-    company: { name: 'Northwind Labs', stage: 'Seed', sector: 'Developer tools', location: 'Remote (US)' },
-    title: 'Founding Product Manager',
-    summary: 'First PM hire — shape onboarding and activation for an API-first product.',
-    pay: pay(150000, 180000),
-    postedDaysAgo: 6,
-    match: true,
-  },
-  {
-    company: { name: 'Cadence', stage: 'Series C', sector: 'Productivity', location: 'New York, NY' },
-    title: 'Product Manager, Calendar Reliability',
-    summary: 'Make calendar sync boringly reliable for 2M weekly users.',
-    pay: pay(155000, 185000),
-    postedDaysAgo: 9,
-    match: false,
-  },
+type Dir = 'yes' | 'no';
+export type DemoDecision = { dir: Dir; matched: boolean; company: string };
+type Method = 'button' | 'gesture' | 'keyboard' | 'auto';
+
+/** Demo script only: in the preview, every other role "swipes back". */
+const isMutual = (index: number) => index % 2 === 0;
+const AUTOPLAY: Dir[] = ['yes', 'no', 'yes', 'no'];
+const AUTOPLAY_MS = 3600;
+const TILT = 8; // degrees, max
+const SPRING = { type: 'spring', stiffness: 100, damping: 20 } as const;
+
+/** Resting pose for each depth of the fan (0 = top). Transform + opacity only. */
+const POSE = [
+  { x: '0%', y: '0%', rotate: 0, scale: 1, opacity: 1 },
+  { x: '-9%', y: '3%', rotate: -6, scale: 0.94, opacity: 1 },
+  { x: '10%', y: '6%', rotate: 7, scale: 0.88, opacity: 0.9 },
+  { x: '0%', y: '10%', rotate: 0, scale: 0.8, opacity: 0 },
 ];
 
-// The autoplay script: what the "demo candidate" does with each card.
-const SCRIPT: Dir[] = ['yes', 'no', 'yes', 'no'];
-type Dir = 'yes' | 'no';
-export type DemoDecision = { dir: Dir; matched: boolean };
+let hoverTracked = false; // once per page view
 
-const AUTOPLAY_MS = 3400;
-const EXIT_MS = 380;
+/** Resolves once a spring has (nearly) reached `to` — or after a short cap, so a hidden tab can't stall the deck. */
+function settled(value: MotionValue<number>, to: number) {
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      off();
+      window.clearTimeout(cap);
+      resolve();
+    };
+    const off = value.on('change', (v) => Math.abs(v - to) < 2 && done());
+    const cap = window.setTimeout(done, 700);
+  });
+}
 
 export default function SwipePreview({ onDecision }: { onDecision?: (d: DemoDecision) => void }) {
+  const reduced = useReducedMotion();
   const [i, setI] = useState(0);
-  const [dx, setDx] = useState(0);
-  const [exit, setExit] = useState<Dir | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const [match, setMatch] = useState<string | null>(null);
-  const [reduced, setReduced] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
-  const startX = useRef(0);
-  const draggingRef = useRef(false);
+  const busy = useRef(false);
+  const hovering = useRef(false);
   const resumeAt = useRef(0);
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const visible = useRef(true);
+  const rootRef = useRef<HTMLElement | null>(null);
+  const cardRef = useRef<HTMLElement | null>(null);
   const onDecisionRef = useRef(onDecision);
   onDecisionRef.current = onDecision;
 
-  const card = DEMO[i % DEMO.length];
-  const next = DEMO[(i + 1) % DEMO.length];
+  // Drag: the pointer sets `target`; the card renders a stiff spring of it, so it tracks the
+  // finger closely, springs home on a short drag and flies off on a throw — one value, no
+  // imperative animate() (which would pull a much larger slice of motion into the bundle).
+  const target = useMotionValue(0);
+  const x = useSpring(target, { stiffness: 520, damping: 38, mass: 0.8 });
+  const dragRotate = useTransform(x, [-300, 0, 300], [-16, 0, 16]);
+  const yesOpacity = useTransform(x, [20, 110], [0, 1]);
+  const noOpacity = useTransform(x, [-110, -20], [1, 0]);
+  // Hover tilt: springs, not CSS transitions.
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+  const rotateX = useSpring(tiltX, { stiffness: 180, damping: 18 });
+  const rotateY = useSpring(tiltY, { stiffness: 180, damping: 18 });
 
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
+  const drag = useRef<{ id: number; startX: number; lastX: number; lastT: number; v: number } | null>(null);
 
-  // Only autoplay while the preview is on screen.
+  const commit = useCallback(
+    async (dir: Dir, method: Method) => {
+      if (busy.current) return;
+      busy.current = true;
+      if (method !== 'auto') {
+        resumeAt.current = Date.now() + 8000; // the visitor has the wheel for a while
+        track('landing_demo_swiped', { decision: dir === 'yes' ? 'interested' : 'pass', method });
+      }
+      const role = ROLES[i % ROLES.length];
+      const matched = dir === 'yes' && isMutual(i);
+      onDecisionRef.current?.({ dir, matched, company: role.company.name });
+      setAnnounce(dir === 'yes' ? `Interested in ${role.company.name}` : `Passed on ${role.company.name}`);
+      tiltX.set(0);
+      tiltY.set(0);
+      if (!reduced) {
+        const off = (rootRef.current?.offsetWidth ?? 600) * 1.1;
+        target.set(dir === 'yes' ? off : -off);
+        await settled(x, dir === 'yes' ? off : -off);
+      }
+      setI((n) => n + 1); // x resets in the layout effect below, in the same frame the new top mounts
+      if (matched) {
+        setToast(role.company.name);
+        setAnnounce(`It’s a match with ${role.company.name}`);
+        window.setTimeout(() => setToast(null), 2200);
+      }
+      busy.current = false;
+    },
+    [i, reduced, x, target, tiltX, tiltY],
+  );
+
+  // The next card becomes the top card: reset the shared drag value before paint,
+  // so it neither inherits the thrown card's offset nor flashes the old card centred.
+  useLayoutEffect(() => {
+    target.jump(0);
+    x.jump(0);
+  }, [i, x, target]);
+
+  // Only autoplay while on screen.
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([entry]) => (visible.current = entry.isIntersecting), { threshold: 0.3 });
+    const io = new IntersectionObserver(([e]) => (visible.current = e.isIntersecting), { threshold: 0.3 });
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  const commit = useCallback(
-    (dir: Dir, by: 'button' | 'gesture' | 'auto') => {
-      if (exit) return;
-      if (by !== 'auto') {
-        resumeAt.current = Date.now() + 8000; // give the visitor the wheel for a while
-        track('landing_demo_swiped', { decision: dir === 'yes' ? 'interested' : 'pass', method: by });
-      }
-      setDragging(false);
-      draggingRef.current = false;
-      setExit(dir);
-      const current = DEMO[i % DEMO.length];
-      const matched = dir === 'yes' && current.match;
-      onDecisionRef.current?.({ dir, matched });
-      setAnnounce(dir === 'yes' ? `Interested in ${current.company.name}` : `Passed on ${current.company.name}`);
-      window.setTimeout(() => {
-        setI((n) => n + 1);
-        setExit(null);
-        setDx(0);
-        if (matched) {
-          setMatch(current.company.name);
-          setAnnounce(`It’s a match with ${current.company.name}`);
-          window.setTimeout(() => setMatch(null), 2200);
-        }
-      }, reduced ? 120 : EXIT_MS);
-    },
-    [exit, i, reduced],
-  );
-
-  // Autoplay — off for reduced motion, while hovered/focused, or right after the visitor swipes.
+  // Autoplay — never under reduced motion, while hovered or focused, or right after the visitor swipes.
   useEffect(() => {
-    if (reduced || paused) return;
+    if (reduced) return;
     const t = window.setInterval(() => {
-      if (!visible.current || draggingRef.current || Date.now() < resumeAt.current) return;
-      commit(SCRIPT[i % SCRIPT.length], 'auto');
+      const focused = rootRef.current?.contains(document.activeElement);
+      if (!visible.current || hovering.current || focused || drag.current || Date.now() < resumeAt.current) return;
+      void commit(AUTOPLAY[i % AUTOPLAY.length], 'auto');
     }, AUTOPLAY_MS);
     return () => window.clearInterval(t);
-  }, [reduced, paused, commit, i]);
+  }, [reduced, commit, i]);
 
-  function onPointerDown(e: React.PointerEvent) {
-    if (exit) return;
-    draggingRef.current = true;
-    setDragging(true);
-    startX.current = e.clientX;
+  function onPointerEnter() {
+    hovering.current = true;
+    if (!hoverTracked) {
+      hoverTracked = true;
+      track('landing_swipe_preview_hover');
+    }
+  }
+  function onPointerLeave() {
+    hovering.current = false;
+    tiltX.set(0);
+    tiltY.set(0);
+  }
+
+  function onCardPointerDown(e: React.PointerEvent) {
+    if (busy.current) return;
+    drag.current = { id: e.pointerId, startX: e.clientX, lastX: e.clientX, lastT: e.timeStamp, v: 0 };
+    tiltX.set(0);
+    tiltY.set(0);
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }
-  function onPointerMove(e: React.PointerEvent) {
-    if (!draggingRef.current) return;
-    setDx(e.clientX - startX.current);
+  function onCardPointerMove(e: React.PointerEvent) {
+    const d = drag.current;
+    if (d && d.id === e.pointerId) {
+      const dt = e.timeStamp - d.lastT;
+      if (dt > 0) d.v = ((e.clientX - d.lastX) / dt) * 1000; // px/s — a fast flick counts as a swipe
+      d.lastX = e.clientX;
+      d.lastT = e.timeStamp;
+      target.set(e.clientX - d.startX);
+      return;
+    }
+    // Hover tilt (mouse/pen only): the card leans toward the pointer.
+    if (reduced || e.pointerType === 'touch' || !cardRef.current) return;
+    const r = cardRef.current.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    tiltY.set(px * TILT * 2);
+    tiltX.set(-py * TILT * 2);
   }
-  function onPointerUp(e: React.PointerEvent) {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    setDragging(false);
-    const offset = e.clientX - startX.current;
-    if (offset > 80) commit('yes', 'gesture');
-    else if (offset < -80) commit('no', 'gesture');
-    else setDx(0);
+  function onCardPointerUp(e: React.PointerEvent) {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    const offset = e.clientX - d.startX;
+    const fling = Math.abs(d.v) > 650;
+    if (offset > 110 || (fling && d.v > 0)) void commit('yes', 'gesture').finally(() => (drag.current = null));
+    else if (offset < -110 || (fling && d.v < 0)) void commit('no', 'gesture').finally(() => (drag.current = null));
+    else {
+      drag.current = null;
+      target.set(0); // springs home
+    }
   }
 
-  const dir = exit === 'yes' ? 1 : exit === 'no' ? -1 : 0;
-  const transform = exit
-    ? reduced
-      ? 'none'
-      : `translateX(${dir * 130}%) rotate(${dir * 14}deg)`
-    : `translateX(${dx}px) rotate(${reduced ? 0 : dx * 0.06}deg)`;
-  const strength = Math.min(Math.abs(dx) / 80, 1);
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      void commit('yes', 'keyboard');
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      void commit('no', 'keyboard');
+    }
+  }
+
+  const stack = [0, 1, 2].map((depth) => ({ depth, index: i + depth, role: ROLES[(i + depth) % ROLES.length] }));
+  const top = stack[0];
 
   return (
-    <div
+    <section
       ref={rootRef}
-      className={s.preview}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
+      aria-roledescription="interactive preview"
+      aria-label="Swipe deck preview with sample roles. Use the buttons, drag the card, or press the left and right arrow keys."
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      className="relative mx-auto w-full max-w-[var(--deck-w)] rounded-[28px] outline-none focus-visible:ring-4 focus-visible:ring-navy/25"
     >
-      <div className={s.frameWrap}>
-        {/* Transient match toast (the pay band itself now leads the card, so no pay chip). */}
-        <div className={`${s.chip} ${s.chipMatch} ${match ? s.chipMatchOn : ''}`} aria-hidden="true">
-          <span className={s.chipIcon}>
+      <h2 className="sr-only">Try the swipe deck</h2>
+
+      {/* The fan. Perspective on the stack gives the top card real depth when it tilts. */}
+      <div className="relative aspect-[4/5] w-full [perspective:1000px]" data-deck>
+        {stack
+          .slice()
+          .reverse()
+          .map(({ depth, index, role }) => {
+            const isTop = depth === 0;
+            return (
+              <m.div
+                key={index}
+                data-depth={depth}
+                // Phones show one card at a time; the fan appears from sm up.
+                className={`absolute inset-0 will-change-transform ${isTop ? '' : 'hidden sm:block'}`}
+                initial={reduced ? false : POSE[3]}
+                animate={POSE[depth]}
+                transition={reduced ? { duration: 0 } : SPRING}
+                style={{ zIndex: 10 - depth }}
+                aria-hidden={isTop ? undefined : true}
+              >
+                {isTop ? (
+                  <m.article
+                    ref={cardRef}
+                    className="rolecard touch-pan-y select-none will-change-transform"
+                    aria-label={`${role.company.name}: ${role.title}`}
+                    style={{ x, rotate: dragRotate, rotateX, rotateY, transformPerspective: 1000 }}
+                    onPointerDown={onCardPointerDown}
+                    onPointerMove={onCardPointerMove}
+                    onPointerUp={onCardPointerUp}
+                    onPointerCancel={() => {
+                      drag.current = null;
+                      target.set(0);
+                    }}
+                  >
+                    <RoleCardFace role={role} as="div" />
+                    <m.span className="rolecard__stamp rolecard__stamp--yes" style={{ opacity: yesOpacity }} aria-hidden="true">
+                      Interested
+                    </m.span>
+                    <m.span className="rolecard__stamp rolecard__stamp--no" style={{ opacity: noOpacity }} aria-hidden="true">
+                      Pass
+                    </m.span>
+                  </m.article>
+                ) : (
+                  <div className="rolecard" style={{ cursor: 'default' }}>
+                    <RoleCardFace role={role} as="div" />
+                  </div>
+                )}
+              </m.div>
+            );
+          })}
+
+        {/* Mutual match toast — transform + opacity only. */}
+        <m.div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-3 bottom-[22%] z-20 flex items-center gap-3 rounded-2xl bg-navy px-4 py-3 font-l-sans text-sm font-semibold text-white shadow-[0_30px_60px_-30px_rgba(27,33,64,0.9)] sm:-right-10"
+          initial={false}
+          animate={toast ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 10, scale: 0.92 }}
+          transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 18 }}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-coral">
             <Heart size={16} />
           </span>
           <span>
-            It’s a match!
-            <span className={s.chipSub}>{match ?? 'Ledgerly'} swiped right too</span>
+            It’s a match
+            <span className="block text-xs font-normal text-lilac-3">{toast ?? top.role.company.name} swiped right too</span>
           </span>
-        </div>
-
-        <section className={s.frame} aria-label="Interactive preview of the swipe deck">
-          {/* Same stack as the app: the next card waits one step back and rises into place. */}
-          <div className="deck__stack" data-advancing={exit ? 'true' : undefined}>
-            <div className="deck__ghost deck__ghost--2" aria-hidden="true" />
-            <div key={`peek-${i + 1}`} className="deck__peek" aria-hidden="true">
-              <div className="rolecard">
-                <RoleCardFace role={next} as="div" />
-              </div>
-            </div>
-            <div key={i} className="deck__top deck__top--promoted">
-              <article
-                className="rolecard"
-                aria-label={`${card.company.name}: ${card.title}`}
-                onPointerDown={onPointerDown}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerCancel={() => {
-                  draggingRef.current = false;
-                  setDragging(false);
-                  setDx(0);
-                }}
-                style={{
-                  transform,
-                  opacity: exit ? 0 : 1,
-                  transition: dragging
-                    ? 'none'
-                    : `transform ${EXIT_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${EXIT_MS}ms ease`,
-                  cursor: dragging ? 'grabbing' : 'grab',
-                }}
-              >
-                <RoleCardFace role={card} as="div" />
-                <span className="rolecard__stamp rolecard__stamp--yes" style={{ opacity: dx > 4 ? strength : 0 }} aria-hidden="true">
-                  Interested
-                </span>
-                <span className="rolecard__stamp rolecard__stamp--no" style={{ opacity: dx < -4 ? strength : 0 }} aria-hidden="true">
-                  Pass
-                </span>
-              </article>
-            </div>
-          </div>
-
-          <div className={s.previewActions}>
-            <button type="button" className={s.roundBtn} aria-label="Pass on this sample role" onClick={() => commit('no', 'button')}>
-              <Cross size={22} />
-            </button>
-            <button
-              type="button"
-              className={`${s.roundBtn} ${s.roundBtnYes}`}
-              aria-label="Interested in this sample role"
-              onClick={() => commit('yes', 'button')}
-            >
-              <Heart size={26} />
-            </button>
-          </div>
-          <p className={s.previewHint}>Try it — drag the card or tap a button.</p>
-          <p className="sr-only" aria-live="polite">
-            {announce}
-          </p>
-        </section>
+        </m.div>
       </div>
-    </div>
+
+      <div className="mt-8 flex items-center justify-center gap-5">
+        <button
+          type="button"
+          onClick={() => void commit('no', 'button')}
+          aria-label={`Pass on ${top.role.company.name}`}
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-white text-muted shadow-[0_10px_22px_-14px_rgba(27,33,64,0.5)] transition-transform duration-200 hover:-translate-y-0.5 hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy/25"
+        >
+          <Cross size={22} />
+        </button>
+        <button
+          type="button"
+          onClick={() => void commit('yes', 'button')}
+          aria-label={`Interested in ${top.role.company.name}`}
+          className="flex h-16 w-16 items-center justify-center rounded-full border border-coral-pressed bg-coral text-white shadow-[0_16px_30px_-14px_rgba(226,74,80,0.75)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy/25"
+        >
+          <Heart size={26} />
+        </button>
+      </div>
+      <p className="mt-3 text-center font-l-sans text-[0.8rem] text-muted">Drag the card, tap a button, or use ← →</p>
+      <p className="sr-only" aria-live="polite">
+        {announce}
+      </p>
+    </section>
   );
 }

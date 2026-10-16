@@ -3,48 +3,49 @@ import { liveState, seed, topCard } from './helpers';
 
 /**
  * The breakpoint spec (docs/BREAKPOINTS.md), executable.
- * Scale: xs 400 · sm 640 · md 768 · lg 1080 · xl 1280, plus the landing
- * nav's content breakpoint at 920. Each case sits on one side of a boundary.
+ * Scale: xs 400 · sm 640 · md 768 · lg 1080 · xl 1280; the landing page uses
+ * Tailwind's sm/md/lg (640/768/1024). Each case sits on one side of a boundary.
  */
 
 const at = (page: Page, width: number, height = 900) => page.setViewportSize({ width, height });
 
-/** Reads computed layout facts via CSS-module class prefixes (`<file>_<local>__<hash>`). */
+/** Reads computed layout facts from the landing's data-* hooks (src/app/_landing). */
 async function landingLayout(page: Page) {
   return page.evaluate(() => {
-    const el = (local: string) => document.querySelector<HTMLElement>(`[class*="_${local}__"]`);
-    const style = (local: string) => {
-      const e = el(local);
-      return e ? getComputedStyle(e) : null;
+    const el = (attr: string) => document.querySelector<HTMLElement>(`[${attr}]`);
+    const shown = (attr: string) => {
+      const e = el(attr);
+      return !!e && getComputedStyle(e).display !== 'none';
     };
-    const cols = (local: string) => {
-      const v = style(local)?.gridTemplateColumns;
-      return v && v !== 'none' ? v.split(' ').length : 0;
-    };
+    const grid = el('data-hero-grid');
+    const cols = grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').length : 0;
     return {
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      gutter: style('container')?.paddingLeft,
-      nav: style('nav')?.display !== 'none',
-      menuButton: style('menuBtn')?.display !== 'none',
-      hero: cols('heroGrid'),
-      truths: cols('truthsGrid'),
+      gutter: grid ? getComputedStyle(grid).paddingLeft : undefined,
+      nav: shown('data-landing-nav'),
+      menuButton: shown('data-landing-menu-button'),
+      hero: cols,
+      // Phones show one deck card at a time; the three-card fan appears from sm.
+      deckCards: Array.from(document.querySelectorAll('[data-deck] > [data-depth]')).filter(
+        (d) => getComputedStyle(d).display !== 'none',
+      ).length,
     };
   });
 }
 
 test.describe('Breakpoints — landing', () => {
   const cases: [number, Partial<Awaited<ReturnType<typeof landingLayout>>>][] = [
-    [375, { gutter: '16px', menuButton: true, nav: false, hero: 1, truths: 2 }], // below xs: strip stays 2×2
-    [400, { gutter: '16px', truths: 2 }], // xs
-    [639, { hero: 1 }], // just below sm: hero stacks (card follows the CTAs)
-    [640, { hero: 2 }], // sm: card beside the copy
-    [767, { gutter: '16px', truths: 2 }], // just below md
-    [768, { gutter: '32px', truths: 4, menuButton: true, hero: 2 }], // md
-    [919, { menuButton: true, nav: false }], // just below the nav content breakpoint
-    [920, { menuButton: false, nav: true, hero: 2 }], // full nav fits
-    [1079, { hero: 2 }], // just below lg
-    [1080, { hero: 3 }], // lg: the headline frames the card (line one above, line two below)
-    [1440, { hero: 3, nav: true }],
+    [375, { gutter: '16px', menuButton: true, nav: false, hero: 1, deckCards: 1 }], // below xs: one card at a time
+    [400, { gutter: '16px', deckCards: 1 }], // xs
+    [639, { hero: 1, deckCards: 1 }], // just below sm
+    [640, { hero: 1, deckCards: 3, gutter: '32px' }], // sm: the fan appears
+    [767, { menuButton: true, nav: false }], // just below md
+    [768, { menuButton: false, nav: true, hero: 1 }], // md: two nav links fit, no menu needed
+    [919, { nav: true }],
+    [920, { nav: true, hero: 1 }],
+    [1023, { hero: 1 }], // just below the hero split
+    [1024, { hero: 2, deckCards: 3 }], // lg (Tailwind): deck left 60%, heading right 40%
+    [1440, { hero: 2, nav: true, gutter: '48px' }],
   ];
 
   for (const [width, expected] of cases) {
@@ -58,7 +59,7 @@ test.describe('Breakpoints — landing', () => {
     });
   }
 
-  // #3: the demo card — the product proof — is in the first viewport at every common size.
+  // The swipe deck — the product demo — starts inside the first viewport at every common size.
   for (const [width, height] of [
     [375, 812],
     [768, 1024],
@@ -68,25 +69,28 @@ test.describe('Breakpoints — landing', () => {
     test(`the hero card starts inside the first viewport (${width}×${height})`, async ({ page }) => {
       await at(page, width, height);
       await page.goto('/');
-      const card = (await page.locator('#hero .deck__top .rolecard').boundingBox())!;
+      const card = (await page.locator('#hero [data-deck] article').boundingBox())!;
       expect(card.y).toBeLessThan(height - 200);
-      if (width >= 1080) {
-        // Line two of the headline sits below the card and must still be on screen.
-        const line2 = (await page.locator('[class*="_line2__"]').boundingBox())!;
-        expect(line2.y + line2.height).toBeLessThanOrEqual(height);
+      if (width >= 1024) {
+        // Side by side: the whole heading is on screen next to the deck.
+        const h1 = (await page.getByRole('heading', { level: 1 }).boundingBox())!;
+        expect(h1.y + h1.height).toBeLessThanOrEqual(height);
       }
     });
   }
 
-  test('the background tree is brighter only while the hero is in view (lg and up)', async ({ page }) => {
+  // Replaces the background-tree check (GrowthTree was removed): the header's
+  // frosted background is scroll-linked — clear over the hero, solid once scrolled.
+  test('the header background is clear over the hero and fades in once scrolled', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' }); // reduced motion keeps it solid throughout
     await at(page, 1280);
     await page.goto('/');
-    const tree = page.locator('[class*="_bgTree__"]');
-    await expect(tree).toHaveCSS('opacity', '0.55');
+    const bg = page.locator('[data-landing-header] > div').first();
+    await expect(bg).toHaveCSS('opacity', '0');
     await page.evaluate(() => document.getElementById('how')!.scrollIntoView({ block: 'start' }));
-    await expect(tree).toHaveCSS('opacity', '0.22');
+    await expect(bg).toHaveCSS('opacity', '1');
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(tree).toHaveCSS('opacity', '0.55');
+    await expect(bg).toHaveCSS('opacity', '0');
   });
 });
 

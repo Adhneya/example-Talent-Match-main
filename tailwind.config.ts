@@ -31,6 +31,9 @@ const config: Config = {
         serif: ['Cambria', 'var(--font-caladea)', 'ui-serif', 'Georgia', 'serif'],
         sans: ['Calibri', 'var(--font-carlito)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         devanagari: ['var(--font-devanagari)', 'Calibri', 'var(--font-carlito)', 'sans-serif'],
+        // Landing page only (src/app/_landing/fonts.ts) — variable faces.
+        'l-sans': ['var(--font-l-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'l-serif': ['var(--font-l-serif)', 'ui-serif', 'Georgia', 'serif'],
       },
       borderRadius: {
         btn: '999px',

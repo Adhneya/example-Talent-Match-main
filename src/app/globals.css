@@ -641,7 +641,7 @@ textarea.input {
   }
 }
 
-/* Welcome (S-01) styles live in src/app/_landing/landing.module.css. */
+/* Welcome (S-01): Tailwind in src/app/_landing; its few CSS rules are under "Landing page" below. */
 
 /* ════════════════════════════════════════════════════════════
    Onboarding (S-02 → S-05)
@@ -1698,6 +1698,81 @@ textarea.input {
   }
   24% {
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Landing page (src/app/_landing) — scoped. Layout, spacing and colour
+   are Tailwind; CSS owns only the tokens, the gradient-border keyframe and
+   the heading's no-JS weight. The landing's variable fonts (_landing/fonts.ts)
+   exist only under `.landing`; nothing here changes the app's tokens.
+   ════════════════════════════════════════════════════════════ */
+.landing {
+  --l-sans: var(--font-l-sans), ui-sans-serif, system-ui, sans-serif;
+  --l-serif: var(--font-l-serif), ui-serif, Georgia, serif;
+  --l-glow-from: var(--coral);
+  --l-glow-to: var(--navy);
+  --l-glow-width: 1.5px;
+  font-family: var(--l-serif);
+  color: var(--ink);
+  background: #fff;
+}
+/* Cards inside the landing are the product itself: they keep the app's type. */
+.landing .rolecard {
+  font-family: var(--font-sans);
+}
+/* The hero heading's weight is scroll-driven in JS (Hero.tsx). Without JS — or
+   before hydration — it shows the weight the animation ends on. */
+.landing-heading {
+  font-family: var(--l-sans);
+  font-variation-settings: 'wght' 800;
+  font-optical-sizing: auto;
+}
+
+/* Gradient border glow (coral → navy, 3s loop). The ring is masked to a
+   hairline and only a pseudo-element *rotates* inside it, so the loop is a
+   transform animation — no repainted background-position. */
+.glow {
+  position: relative;
+  isolation: isolate;
+}
+.glow__ring {
+  position: absolute;
+  inset: calc(var(--l-glow-width) * -1);
+  border-radius: inherit;
+  padding: var(--l-glow-width);
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.glow__ring::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260%;
+  aspect-ratio: 1;
+  background: conic-gradient(
+    from 0deg,
+    var(--l-glow-from),
+    var(--l-glow-to),
+    var(--lilac-2),
+    var(--l-glow-to),
+    var(--l-glow-from)
+  );
+  transform: translate(-50%, -50%) rotate(0turn);
+  animation: glow-spin 3s linear infinite;
+  will-change: transform;
+}
+/* Set from useReducedMotion() (GlowBorder.tsx), not a media query. */
+.glow--still .glow__ring::before {
+  animation: none;
+}
+@keyframes glow-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(1turn);
   }
 }
 
