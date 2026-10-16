@@ -20,7 +20,7 @@ export function LinkedInStep({ user, onSignOut }: { user: SessionUser | null; on
         <div className="account-chip">
           <LinkedInMark size={22} style={{ color: 'var(--linkedin)' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.name ?? 'Signed in'}
             </div>
             <div className="t-fine">Signed in with LinkedIn</div>
@@ -108,7 +108,7 @@ export function ResumeDropzone({
         <div className="dropzone dropzone--filled">
           <Doc size={26} style={{ color: 'var(--navy)' }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {value.name}
             </div>
             <div className="t-fine">{sizeLabel(value.size)}</div>
@@ -137,7 +137,7 @@ export function ResumeDropzone({
           }}
         >
           <Upload size={28} style={{ color: 'var(--navy)' }} />
-          <span style={{ fontWeight: 600, color: 'var(--ink)' }}>Drop your resume here, or browse</span>
+          <span style={{ fontWeight: 700, color: 'var(--ink)' }}>Drop your resume here, or browse</span>
           <span className="t-fine">{disabled ? 'Sign in with LinkedIn first · PDF or DOCX' : 'PDF or DOCX'}</span>
           {input}
         </label>

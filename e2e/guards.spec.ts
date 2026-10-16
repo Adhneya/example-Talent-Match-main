@@ -24,7 +24,7 @@ test.describe('Route guard (session + profile stage)', () => {
     const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/)?.[1] ?? '';
     const markup = body.replace(/<script[\s\S]*?<\/script>/g, '');
     expect(markup).toContain('Swipe on roles.');
-    expect(markup).toContain('Fast onboarding');
+    expect(markup).toContain('in three moves.');
   });
 
   test('Phase 1 and 2 routes are dark while their flags are off', async ({ request }) => {

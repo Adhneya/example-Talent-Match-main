@@ -239,7 +239,7 @@ export function StandoutHighlight({ value, onChange }: { value: string; onChange
           multiline
           value={value}
           onCommit={onChange}
-          render={(v) => <p style={{ fontWeight: 500, lineHeight: 1.5 }}>{v}</p>}
+          render={(v) => <p style={{ fontWeight: 400, lineHeight: 1.5 }}>{v}</p>}
         />
       </div>
     </div>
@@ -262,7 +262,7 @@ export function SalaryExpectationField({ value, onChange }: { value: Salary; onC
     return (
       <div className="efield">
         <p className="efield__value" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--navy)' }}>
-          {formatSalary(value)} <span className="t-fine" style={{ fontFamily: 'var(--font-sans)', fontWeight: 500 }}>per year</span>
+          {formatSalary(value)} <span className="t-fine" style={{ fontFamily: 'var(--font-sans)', fontWeight: 400 }}>per year</span>
         </p>
         <button
           type="button"

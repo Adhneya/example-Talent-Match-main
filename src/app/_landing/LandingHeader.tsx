@@ -77,7 +77,7 @@ export default function LandingHeader({
         <div className={s.actions}>
           <Link
             href={loginHref}
-            className={`${s.cta} ${s.ctaGhost} ${s.ctaSm} ${s.loginDesktop}`}
+            className={`btn btn--ghost ${s.headerLogin} ${s.loginDesktop}`}
             title={resuming ? 'Pick up where you left off' : undefined}
             onClick={() => track('landing_cta_clicked', { cta: 'log_in', location: 'header' })}
           >
@@ -85,7 +85,7 @@ export default function LandingHeader({
           </Link>
           <Link
             href={resumeHref}
-            className={`${s.cta} ${s.ctaPrimary} ${s.ctaSm} ${s.headerGetStarted}`}
+            className={`btn btn--primary ${s.headerGetStarted}`}
             onClick={() => track('landing_cta_clicked', { cta: 'get_started', location: 'header' })}
           >
             Get Started

@@ -41,7 +41,7 @@ export default function NotificationsPage() {
                 href={`/matches/${n.matchId}`}
                 className={`card item item--link${n.at > seenBefore.current ? ' item--unread' : ''}`}
               >
-                <div style={{ fontWeight: 600 }}>{n.title}</div>
+                <div style={{ fontWeight: 700 }}>{n.title}</div>
                 <div className="t-fine" style={{ marginTop: 4 }}>
                   {n.body} · {new Date(n.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                 </div>

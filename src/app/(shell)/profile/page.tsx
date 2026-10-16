@@ -94,7 +94,7 @@ export default function ProfilePage() {
           <div className="account-chip" style={{ marginTop: 14 }}>
             <LinkedInMark size={22} style={{ color: 'var(--linkedin)' }} />
             <div style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
-              <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{user.name ?? 'Signed in'}</div>
+              <div style={{ fontWeight: 700, color: 'var(--ink)' }}>{user.name ?? 'Signed in'}</div>
               <div className="t-fine">Signed in with LinkedIn{user.email ? ` · ${user.email}` : ''}</div>
             </div>
             <button type="button" className="btn" onClick={() => void endSession()}>

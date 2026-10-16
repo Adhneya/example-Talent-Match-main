@@ -75,7 +75,7 @@ export default function MatchDetailPage() {
             <p className="t-body t-muted" style={{ marginTop: 8 }}>
               A three-week, internship-style engagement to test fit both ways before anyone commits.
             </p>
-            <p style={{ marginTop: 12, fontWeight: 600, color: 'var(--navy)' }}>{status.terms}</p>
+            <p style={{ marginTop: 12, fontWeight: 700, color: 'var(--navy)' }}>{status.terms}</p>
             {match.trialResponse ? (
               <p className="field__msg field__msg--ok" style={{ marginTop: 16 }}>
                 {match.trialResponse === 'accepted'

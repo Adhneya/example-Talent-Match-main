@@ -16,7 +16,11 @@
      self-hosted via next/font, so layout is identical everywhere. */
   --font-serif: Cambria, var(--font-caladea), ui-serif, Georgia, serif;
   --font-sans: Calibri, var(--font-carlito), ui-sans-serif, system-ui, sans-serif;
-  /* --font-devanagari is set directly by next/font on <html>. */
+  /* --font-devanagari is set directly by next/font on <html>.
+     Weights: Cambria, Calibri, Caladea and Carlito each ship Regular and Bold
+     only, so the system uses exactly two weights — 400 and 700. Never 500/600:
+     those silently render as 400/700 anyway (and `font-synthesis: none` below
+     stops the browser faking anything in between). Hierarchy comes from size. */
 
   /* ── Color — deck tokens ─────────────────────────────────── */
   --navy: #2f3c7e; /* primary: slide 1 bg, slide 5 card header, icon discs (white on it 10:1) */
@@ -42,11 +46,11 @@
   --ring: 0 0 0 4px rgba(47, 60, 126, 0.22);
 
   /* ── Type scale ──────────────────────────────────────────── */
-  --fs-display: clamp(2.6rem, 7vw, 4.75rem);
-  --fs-h1: clamp(2rem, 5vw, 3rem);
-  --fs-h2: clamp(1.6rem, 3.6vw, 2.25rem);
-  --fs-h3: clamp(1.3rem, 2.4vw, 1.6rem);
-  --fs-lead: 1.1875rem;
+  --fs-display: clamp(3rem, 8vw, 6.5rem);
+  --fs-h1: clamp(2.35rem, 5.8vw, 3.75rem);
+  --fs-h2: clamp(1.85rem, 4.2vw, 2.75rem);
+  --fs-h3: clamp(1.4rem, 2.6vw, 1.8rem);
+  --fs-lead: 1.25rem;
   --fs-body: 1rem;
   --fs-label: 0.875rem;
   --fs-fine: 0.8125rem;
@@ -55,7 +59,7 @@
   --col: 560px;
   --wrap: 1180px;
   --card-w: 400px;
-  --radius-btn: 10px;
+  --radius-btn: var(--radius-pill); /* buttons are pills everywhere */
   --radius-card: 18px;
   --radius-pill: 999px;
   --bnav-h: 68px;
@@ -90,6 +94,7 @@ body {
   font-size: var(--fs-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-synthesis: none; /* two real weights only (see :root) — never faux bold */
   /* A translating swipe card can never scroll the page. `clip` (not `hidden`) so
      body doesn't become a scroll container — that would break position: sticky.
      `hidden` stays first as the fallback for browsers without `clip`. */
@@ -133,7 +138,7 @@ h2,
 h3,
 h4 {
   font-family: var(--font-serif);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.01em;
   margin: 0;
@@ -143,7 +148,7 @@ h4 {
 .t-display {
   font-family: var(--font-serif);
   font-size: var(--fs-display);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.02;
   letter-spacing: -0.015em;
   text-wrap: balance;
@@ -151,20 +156,20 @@ h4 {
 .t-h1 {
   font-family: var(--font-serif);
   font-size: var(--fs-h1);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.08;
   text-wrap: balance;
 }
 .t-h2 {
   font-family: var(--font-serif);
   font-size: var(--fs-h2);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.1;
 }
 .t-h3 {
   font-family: var(--font-serif);
   font-size: var(--fs-h3);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.15;
 }
 .t-lead {
@@ -182,7 +187,7 @@ h4 {
 }
 .t-label {
   font-size: var(--fs-label);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 .t-fine {
@@ -237,12 +242,12 @@ h4 {
   justify-content: center;
   gap: 0.5em;
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
   color: var(--navy);
   background: #fff;
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-pill); /* pill buttons, matching the homepage */
+  border-radius: var(--radius-btn); /* pill buttons, matching the homepage */
   padding: 0.75em 1.35em;
   line-height: 1;
   white-space: nowrap;
@@ -275,6 +280,13 @@ h4 {
 .btn--primary:hover {
   background: var(--navy-deep);
   border-color: var(--navy-deep);
+}
+.btn svg {
+  transition: transform 180ms ease;
+}
+/* A trailing arrow leans forward on hover. */
+.btn--primary:hover svg:last-child {
+  transform: translateX(3px);
 }
 .btn--primary.btn--lg:hover {
   transform: translateY(-1px);
@@ -333,7 +345,7 @@ h4 {
   border: none;
   padding: 0;
   color: var(--navy);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
@@ -393,7 +405,7 @@ h4 {
   gap: 8px;
   padding: 9px 14px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.92rem;
   color: var(--muted);
   background: transparent;
@@ -436,7 +448,7 @@ h4 {
   padding: 6px 10px;
   border-radius: 10px;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 .bnav__item[aria-current='page'] {
@@ -486,7 +498,7 @@ h4 {
 .field__label {
   display: block;
   font-size: var(--fs-label);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
   margin-bottom: 8px;
 }
@@ -547,13 +559,19 @@ textarea.input {
   padding: 6px 12px;
   border-radius: var(--radius-pill);
   font-size: 0.86rem;
-  font-weight: 500;
+  font-weight: 400;
   background: var(--tint);
   color: var(--ink);
   border: 1px solid var(--border);
 }
 .tag__x {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; /* WCAG 2.2 target-size minimum */
+  height: 24px;
+  margin: -4px -8px -4px -4px;
+  border-radius: 50%;
   background: none;
   border: none;
   padding: 0;
@@ -567,7 +585,7 @@ textarea.input {
   align-items: center;
   gap: 6px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 .source-badge__dot {
@@ -604,7 +622,7 @@ textarea.input {
   background: none;
   border: none;
   color: var(--lilac-3);
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px;
 }
 @media (max-width: 767.98px) {
@@ -644,8 +662,8 @@ textarea.input {
   flex-direction: column;
   gap: 8px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--neutral);
+  font-weight: 700;
+  color: var(--muted); /* real text: 6.1:1 (--neutral is 2.6:1, decorative only) */
 }
 .stepper__bar {
   height: 4px;
@@ -740,8 +758,8 @@ textarea.input {
   align-items: center;
   gap: 14px;
   padding: 12px 4px;
-  color: var(--neutral);
-  font-weight: 500;
+  color: var(--muted); /* real text: 6.1:1 (--neutral is 2.6:1, decorative only) */
+  font-weight: 400;
   transition: color 200ms ease;
 }
 .timeline__mark {
@@ -822,7 +840,7 @@ textarea.input {
   padding: 6px 8px;
   border-radius: 8px;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--navy);
 }
 .efield__edit:hover {
@@ -863,7 +881,7 @@ textarea.input {
   border-radius: 14px;
   border: 1.5px solid var(--border);
   background: #fff;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   color: var(--ink);
   text-align: left;
@@ -913,18 +931,51 @@ textarea.input {
   border: 1px solid var(--border);
   transform-origin: 50% 100%;
 }
-.deck__ghost--1 {
-  transform: translateY(12px) scale(0.95);
-  opacity: 0.85;
-}
 .deck__ghost--2 {
   transform: translateY(24px) scale(0.9);
   opacity: 0.55;
+}
+/* The next role, already rendered one step back — so when the top card leaves,
+   the deck never shows an empty frame: this card rises into place (#6). */
+.deck__peek {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: translateY(12px) scale(0.95);
+  pointer-events: none;
+}
+.deck__peek .rolecard {
+  box-shadow: none;
+  cursor: default;
+}
+.deck__peek::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.45);
+}
+.deck__stack[data-advancing='true'] .deck__peek {
+  transform: none;
+  transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.deck__stack[data-advancing='true'] .deck__peek::after {
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.deck__stack[data-advancing='true'] .deck__ghost--2 {
+  transform: translateY(12px) scale(0.95);
+  opacity: 0.85;
+  transition: transform 340ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 340ms ease;
 }
 .deck__top {
   position: absolute;
   inset: 0;
   animation: cardIn 260ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+/* Arrived by rising from the peek position: already in place, no entrance. */
+.deck__top--promoted {
+  animation: none;
 }
 .rolecard {
   position: absolute;
@@ -941,6 +992,7 @@ textarea.input {
   -webkit-user-select: none;
   will-change: transform;
   cursor: grab;
+  container-type: inline-size; /* type inside the card scales with the card, not the viewport */
 }
 .rolecard--static {
   position: relative;
@@ -949,40 +1001,168 @@ textarea.input {
   user-select: text;
   -webkit-user-select: text;
   box-shadow: none;
+  will-change: auto;
+}
+.rolecard {
+  --card-pad: clamp(12px, 5.5cqi, 22px); /* every region scales with the card's own width */
 }
 .rolecard__head {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 3.5cqi, 14px);
   background: var(--navy);
   color: #fff;
-  padding: 22px 24px 20px;
+  padding: clamp(12px, 4.5cqi, 18px) var(--card-pad);
 }
 .rolecard__company {
   font-family: var(--font-serif);
-  font-size: 1.45rem;
+  font-size: clamp(0.95rem, 6cqi, 1.5rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .rolecard__meta {
-  margin-top: 6px;
-  font-size: 0.86rem;
+  margin-top: 3px;
+  font-size: clamp(0.72rem, 3.5cqi, 0.86rem);
   color: var(--lilac-3);
+}
+/* Company monogram — palette tones only, stable per company (RoleCard.tsx). */
+.cmark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(30px, 11cqi, 44px);
+  height: clamp(30px, 11cqi, 44px);
+  border-radius: 12px;
+  font-family: var(--font-serif);
+  font-size: clamp(0.75rem, 4.2cqi, 1.05rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--navy);
+  background: #fff;
+}
+.cmark--sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+}
+.cmark[data-tone='highlight'] {
+  background: var(--highlight);
+}
+.cmark[data-tone='lilac'] {
+  background: var(--lilac-2);
+}
+.cmark[data-tone='lilac-pale'] {
+  background: var(--lilac-3);
+}
+/* Pay leads the card: a big numeral directly under the company (decision 4). */
+.pay {
+  padding: clamp(10px, 3.5cqi, 14px) var(--card-pad);
+  background: var(--tint);
+  border-bottom: 1px solid var(--border);
+}
+.pay__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pay__value {
+  margin-top: 4px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.1rem, 11.5cqi, 2.75rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--navy);
+}
+/* Defensive fallback for direct links only — decision 4 keeps pay-less roles out of the deck. */
+.pay--missing {
+  background: #fff;
+  border-bottom: 1.5px dashed var(--neutral-2);
+}
+.pay--missing .pay__value {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 .rolecard__body {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 22px 24px 20px;
+  gap: clamp(5px, 2cqi, 8px);
+  padding: clamp(12px, 4.5cqi, 18px) var(--card-pad) clamp(10px, 4cqi, 16px);
 }
 .rolecard__title {
   font-family: var(--font-serif);
-  font-size: clamp(1.3rem, 4.6vw, 1.6rem);
-  font-weight: 600;
-  line-height: 1.15;
+  font-size: clamp(0.95rem, 6.4cqi, 1.65rem);
+  font-weight: 700;
+  line-height: 1.12;
   color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .rolecard__summary {
+  font-size: clamp(0.78rem, 4cqi, 1rem);
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rolecard--static .rolecard__title,
+.rolecard--static .rolecard__summary {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+.signals {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--tint);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.signal svg {
+  color: var(--navy);
+}
+.signal--accent {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+.signal--accent svg {
+  color: var(--highlight);
+}
+/* Narrow cards keep the two signals that matter most. */
+@container (max-width: 359.98px) {
+  .signal:nth-child(3) {
+    display: none;
+  }
 }
 .rolecard__foot {
   margin-top: auto;
@@ -991,50 +1171,20 @@ textarea.input {
   justify-content: space-between;
   gap: 10px;
 }
+/* ≥32px hit area (WCAG 2.2 asks 24px) without shifting the visual alignment. */
 .rolecard__more {
-  background: none;
+  min-height: 32px;
+  margin: -6px -12px;
+  padding: 6px 12px;
   border: none;
-  padding: 4px 0;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border-radius: var(--radius-pill);
+  background: none;
+  font-size: 0.86rem;
+  font-weight: 700;
   color: var(--navy);
 }
-.pay {
-  margin: 0 24px 24px;
-  padding: 16px 18px;
-  border-radius: 14px;
+.rolecard__more:hover {
   background: var(--tint);
-}
-.pay__label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.pay__value {
-  margin-top: 4px;
-  font-family: var(--font-serif);
-  font-size: 1.65rem;
-  font-weight: 700;
-  color: var(--navy);
-}
-.pay__value small {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--muted);
-}
-/* Defensive fallback for direct links only — decision 4 keeps pay-less roles out of the deck. */
-.pay--missing {
-  background: #fff;
-  border: 1.5px dashed var(--neutral-2);
-}
-.pay--missing .pay__value {
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--muted);
 }
 .rolecard__tint {
   position: absolute;
@@ -1048,7 +1198,7 @@ textarea.input {
   padding: 6px 12px;
   border-radius: 8px;
   border: 2.5px solid;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.12em;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -1097,7 +1247,7 @@ textarea.input {
   background: var(--tint);
   border: none;
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--navy);
   animation: fadeIn 200ms ease both;
 }
@@ -1268,14 +1418,14 @@ textarea.input {
 }
 .item__company {
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
 }
 .item__title {
   margin-top: 4px;
   font-family: var(--font-serif);
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
 }
 .item__pay {
@@ -1355,9 +1505,9 @@ textarea.input {
   padding: 12px;
   border-radius: 12px;
   border: 1.5px solid var(--border);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.9rem;
-  color: var(--neutral);
+  color: var(--muted); /* real text: 6.1:1 (--neutral is 2.6:1, decorative only) */
   text-align: center;
 }
 .stages__item--done {
@@ -1376,73 +1526,131 @@ textarea.input {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgba(27, 33, 64, 0.84);
+  overflow: hidden; /* the cards fly in from beyond the edges */
+  background: rgba(27, 33, 64, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: fadeIn 200ms ease both;
+  animation: fadeIn 220ms ease both;
 }
 .celebrate {
   width: 100%;
-  max-width: 420px;
-  padding: 36px 28px 28px;
-  border-radius: 24px;
+  max-width: 440px;
+  padding: 40px 28px 28px;
+  border-radius: 28px;
   background: var(--navy);
   color: #fff;
   text-align: center;
   box-shadow: var(--shadow-pop);
-  animation: popIn 380ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  animation: popIn 420ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
 .celebrate__title {
   font-family: var(--font-serif);
-  font-size: 2.4rem;
+  font-size: clamp(2.6rem, 10vw, 3.5rem);
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--highlight);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--highlight); /* 8:1 on navy */
+}
+.celebrate__lead {
+  margin-top: 10px;
+  font-size: 1.1rem;
+  color: var(--lilac-3);
 }
 .celebrate__cards {
   position: relative;
-  height: 150px;
-  margin: 26px auto 22px;
-  width: 220px;
+  width: 290px;
+  height: 196px;
+  margin: 28px auto 24px;
 }
 .celebrate__card {
   position: absolute;
-  top: 10px;
-  width: 104px;
-  height: 130px;
-  border-radius: 14px;
+  top: 8px;
+  width: 136px;
+  height: 172px;
+  padding: 14px;
+  border-radius: 18px;
   background: #fff;
   color: var(--ink);
-  padding: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
   text-align: left;
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 44px -20px rgba(0, 0, 0, 0.55);
 }
 .celebrate__card--you {
-  left: 6px;
+  left: 4px;
   transform: rotate(-8deg);
+  animation: match-from-left 600ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
 }
 .celebrate__card--role {
-  right: 6px;
+  right: 4px;
   transform: rotate(8deg);
+  animation: match-from-right 600ms cubic-bezier(0.2, 0.9, 0.3, 1.15) 60ms both;
+}
+.celebrate__card .cmark {
+  width: 40px;
+  height: 40px;
+  font-size: 0.95rem;
+  background: var(--navy);
+  color: #fff;
+}
+.celebrate__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.celebrate__avatar--initials {
+  background: var(--highlight);
+  color: var(--navy);
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.celebrate__who {
+  margin-top: 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.celebrate__what {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .celebrate__heart {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 58px;
-  height: 58px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--coral);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff; /* icon on coral: 3:1 (graphics minimum) */
-  box-shadow: 0 0 0 6px var(--navy);
+  box-shadow: 0 0 0 7px var(--navy);
+  animation: match-heart 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 460ms both,
+    match-pulse 1.8s ease-in-out 1.2s infinite;
+}
+.celebrate__next {
+  font-size: var(--fs-fine);
+  line-height: 1.45;
+  color: var(--lilac-3);
+}
+.celebrate__actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
 }
 .celebrate .btn:not(.btn--interested) {
   background: transparent;
@@ -1451,6 +1659,46 @@ textarea.input {
 }
 .celebrate .btn:not(.btn--interested):hover {
   background: rgba(255, 255, 255, 0.08);
+}
+@keyframes match-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-180%) rotate(-30deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-8deg);
+  }
+}
+@keyframes match-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(180%) rotate(30deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(8deg);
+  }
+}
+@keyframes match-heart {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+@keyframes match-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  12% {
+    transform: translate(-50%, -50%) scale(1.14);
+  }
+  24% {
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 /* ── Dev-only reset ─────────────────────────────────────────── */
@@ -1465,12 +1713,56 @@ textarea.input {
   background: rgba(255, 255, 255, 0.9);
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 @media (max-width: 767.98px) {
   .dev-reset {
     display: none;
   }
+}
+
+/* ── Spark effects (src/lib/motion.ts) — Interested + match only ── */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+  overflow: hidden;
+}
+.fx-heart,
+.fx-spark,
+.fx-confetti,
+.fx-token {
+  position: absolute;
+  display: block;
+  will-change: transform, opacity;
+}
+.fx-heart {
+  line-height: 0;
+}
+.fx-spark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.fx-confetti {
+  width: 8px;
+  height: 13px;
+  border-radius: 2px;
+}
+.fx-token {
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--coral);
+  color: #fff;
+  box-shadow: 0 12px 26px -10px rgba(226, 74, 80, 0.8);
+  opacity: 0;
 }
 
 /* ── Motion ─────────────────────────────────────────────────── */

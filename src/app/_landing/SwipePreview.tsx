@@ -2,41 +2,46 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Cross, Heart } from '@/components/Icons';
+import { RoleCardFace } from '@/components/RoleCard';
 import { track } from '@/lib/analytics';
+import type { Role } from '@/lib/types';
 import s from './landing.module.css';
 
-/** Sample cards for the hero demo — fictional companies, same regions as the real role card (slide 5). */
-const DEMO = [
+type DemoRole = Pick<Role, 'company' | 'title' | 'summary' | 'pay' | 'postedDaysAgo'> & { match: boolean };
+const pay = (min: number, max: number): Role['pay'] => ({ min, max, currency: 'USD', period: 'year' });
+
+/** Sample cards for the hero demo — fictional companies, rendered by the app's own card face. */
+const DEMO: DemoRole[] = [
   {
-    company: 'Ledgerly',
-    meta: 'Series C · Fintech · Remote (US)',
+    company: { name: 'Ledgerly', stage: 'Series C', sector: 'Fintech', location: 'Remote (US)' },
     title: 'Senior Product Manager, Payments',
     summary: 'Lead card issuing and usage-based billing for SMB finance teams.',
-    pay: '$175K – $210K',
+    pay: pay(175000, 210000),
+    postedDaysAgo: 2,
     match: true,
   },
   {
-    company: 'Acme Freight',
-    meta: 'Series B · Logistics · San Francisco, CA',
+    company: { name: 'Acme Freight', stage: 'Series B', sector: 'Logistics', location: 'San Francisco, CA' },
     title: 'Senior Product Manager, Shipper Platform',
     summary: 'Own the self-serve booking flow used by 4,000 mid-market shippers.',
-    pay: '$165K – $195K',
+    pay: pay(165000, 195000),
+    postedDaysAgo: 3,
     match: false,
   },
   {
-    company: 'Northwind Labs',
-    meta: 'Seed · Developer tools · Remote (US)',
+    company: { name: 'Northwind Labs', stage: 'Seed', sector: 'Developer tools', location: 'Remote (US)' },
     title: 'Founding Product Manager',
     summary: 'First PM hire — shape onboarding and activation for an API-first product.',
-    pay: '$150K – $180K',
+    pay: pay(150000, 180000),
+    postedDaysAgo: 6,
     match: true,
   },
   {
-    company: 'Cadence',
-    meta: 'Series C · Productivity · New York, NY',
+    company: { name: 'Cadence', stage: 'Series C', sector: 'Productivity', location: 'New York, NY' },
     title: 'Product Manager, Calendar Reliability',
     summary: 'Make calendar sync boringly reliable for 2M weekly users.',
-    pay: '$155K – $185K',
+    pay: pay(155000, 185000),
+    postedDaysAgo: 9,
     match: false,
   },
 ];
@@ -44,11 +49,12 @@ const DEMO = [
 // The autoplay script: what the "demo candidate" does with each card.
 const SCRIPT: Dir[] = ['yes', 'no', 'yes', 'no'];
 type Dir = 'yes' | 'no';
+export type DemoDecision = { dir: Dir; matched: boolean };
 
 const AUTOPLAY_MS = 3400;
 const EXIT_MS = 380;
 
-export default function SwipePreview() {
+export default function SwipePreview({ onDecision }: { onDecision?: (d: DemoDecision) => void }) {
   const [i, setI] = useState(0);
   const [dx, setDx] = useState(0);
   const [exit, setExit] = useState<Dir | null>(null);
@@ -62,8 +68,11 @@ export default function SwipePreview() {
   const resumeAt = useRef(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const visible = useRef(true);
+  const onDecisionRef = useRef(onDecision);
+  onDecisionRef.current = onDecision;
 
   const card = DEMO[i % DEMO.length];
+  const next = DEMO[(i + 1) % DEMO.length];
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -93,14 +102,16 @@ export default function SwipePreview() {
       draggingRef.current = false;
       setExit(dir);
       const current = DEMO[i % DEMO.length];
-      setAnnounce(dir === 'yes' ? `Interested in ${current.company}` : `Passed on ${current.company}`);
+      const matched = dir === 'yes' && current.match;
+      onDecisionRef.current?.({ dir, matched });
+      setAnnounce(dir === 'yes' ? `Interested in ${current.company.name}` : `Passed on ${current.company.name}`);
       window.setTimeout(() => {
         setI((n) => n + 1);
         setExit(null);
         setDx(0);
-        if (dir === 'yes' && current.match) {
-          setMatch(current.company);
-          setAnnounce(`It’s a match with ${current.company}`);
+        if (matched) {
+          setMatch(current.company.name);
+          setAnnounce(`It’s a match with ${current.company.name}`);
           window.setTimeout(() => setMatch(null), 2200);
         }
       }, reduced ? 120 : EXIT_MS);
@@ -157,97 +168,76 @@ export default function SwipePreview() {
       onBlur={() => setPaused(false)}
     >
       <div className={s.frameWrap}>
-      {/* Decorative context chips */}
-      <div className={`${s.chip} ${s.chipPay}`} aria-hidden="true">
-        <span className={s.chipIcon}>$</span>
-        <span>
-          Pay shown up front
-          <span className={s.chipSub}>Judge a role in seconds</span>
-        </span>
-      </div>
-      <div className={`${s.chip} ${s.chipMatch} ${match ? s.chipMatchOn : ''}`} aria-hidden="true">
-        <span className={s.chipIcon}>
-          <Heart size={16} />
-        </span>
-        <span>
-          It’s a match!
-          <span className={s.chipSub}>{match ?? 'Ledgerly'} swiped right too</span>
-        </span>
-      </div>
-
-      <section className={s.frame} aria-label="Interactive preview of the swipe deck">
-        <div className={s.frameTop}>
-          <span className={s.live}>
-            <span className={s.liveDot} aria-hidden="true" />
-            Live roles
+        {/* Transient match toast (the pay band itself now leads the card, so no pay chip). */}
+        <div className={`${s.chip} ${s.chipMatch} ${match ? s.chipMatchOn : ''}`} aria-hidden="true">
+          <span className={s.chipIcon}>
+            <Heart size={16} />
+          </span>
+          <span>
+            It’s a match!
+            <span className={s.chipSub}>{match ?? 'Ledgerly'} swiped right too</span>
           </span>
         </div>
 
-        <div className={s.stack}>
-          <div className={`${s.ghost} ${s.ghost2}`} aria-hidden="true" />
-          <div className={`${s.ghost} ${s.ghost1}`} aria-hidden="true" />
-          <article
-            key={i}
-            className={`${s.card} ${s.cardIn}`}
-            aria-label={`${card.company}: ${card.title}, ${card.pay} per year`}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={() => {
-              draggingRef.current = false;
-              setDragging(false);
-              setDx(0);
-            }}
-            style={{
-              transform,
-              opacity: exit ? 0 : 1,
-              transition: dragging
-                ? 'none'
-                : `transform ${EXIT_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${EXIT_MS}ms ease`,
-              cursor: dragging ? 'grabbing' : 'grab',
-            }}
-          >
-            <div className={s.cardHead}>
-              <div className={s.cardCompany}>{card.company}</div>
-              <div className={s.cardMeta}>{card.meta}</div>
-            </div>
-            <div className={s.cardBody}>
-              <div className={s.cardTitle}>{card.title}</div>
-              <p className={s.cardSummary}>{card.summary}</p>
-            </div>
-            <div className={s.cardPay}>
-              <div className={s.cardPayLabel}>Pay range</div>
-              <div className={s.cardPayValue}>
-                {card.pay} <small>per year</small>
+        <section className={s.frame} aria-label="Interactive preview of the swipe deck">
+          {/* Same stack as the app: the next card waits one step back and rises into place. */}
+          <div className="deck__stack" data-advancing={exit ? 'true' : undefined}>
+            <div className="deck__ghost deck__ghost--2" aria-hidden="true" />
+            <div key={`peek-${i + 1}`} className="deck__peek" aria-hidden="true">
+              <div className="rolecard">
+                <RoleCardFace role={next} as="div" />
               </div>
             </div>
-            <span className={`${s.stamp} ${s.stampYes}`} style={{ opacity: dx > 4 ? strength : 0 }} aria-hidden="true">
-              Interested
-            </span>
-            <span className={`${s.stamp} ${s.stampNo}`} style={{ opacity: dx < -4 ? strength : 0 }} aria-hidden="true">
-              Pass
-            </span>
-          </article>
-        </div>
+            <div key={i} className="deck__top deck__top--promoted">
+              <article
+                className="rolecard"
+                aria-label={`${card.company.name}: ${card.title}`}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={() => {
+                  draggingRef.current = false;
+                  setDragging(false);
+                  setDx(0);
+                }}
+                style={{
+                  transform,
+                  opacity: exit ? 0 : 1,
+                  transition: dragging
+                    ? 'none'
+                    : `transform ${EXIT_MS}ms cubic-bezier(0.4,0,0.2,1), opacity ${EXIT_MS}ms ease`,
+                  cursor: dragging ? 'grabbing' : 'grab',
+                }}
+              >
+                <RoleCardFace role={card} as="div" />
+                <span className="rolecard__stamp rolecard__stamp--yes" style={{ opacity: dx > 4 ? strength : 0 }} aria-hidden="true">
+                  Interested
+                </span>
+                <span className="rolecard__stamp rolecard__stamp--no" style={{ opacity: dx < -4 ? strength : 0 }} aria-hidden="true">
+                  Pass
+                </span>
+              </article>
+            </div>
+          </div>
 
-        <div className={s.previewActions}>
-          <button type="button" className={s.roundBtn} aria-label="Pass on this sample role" onClick={() => commit('no', 'button')}>
-            <Cross size={22} />
-          </button>
-          <button
-            type="button"
-            className={`${s.roundBtn} ${s.roundBtnYes}`}
-            aria-label="Interested in this sample role"
-            onClick={() => commit('yes', 'button')}
-          >
-            <Heart size={26} />
-          </button>
-        </div>
-        <p className={s.previewHint}>Try it — drag the card or tap a button.</p>
-        <p className="sr-only" aria-live="polite">
-          {announce}
-        </p>
-      </section>
+          <div className={s.previewActions}>
+            <button type="button" className={s.roundBtn} aria-label="Pass on this sample role" onClick={() => commit('no', 'button')}>
+              <Cross size={22} />
+            </button>
+            <button
+              type="button"
+              className={`${s.roundBtn} ${s.roundBtnYes}`}
+              aria-label="Interested in this sample role"
+              onClick={() => commit('yes', 'button')}
+            >
+              <Heart size={26} />
+            </button>
+          </div>
+          <p className={s.previewHint}>Try it — drag the card or tap a button.</p>
+          <p className="sr-only" aria-live="polite">
+            {announce}
+          </p>
+        </section>
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ export default function RoleTargetPicker({
               <span>
                 {t.label}
                 {suggested === t.id && (
-                  <span className="t-fine" style={{ display: 'block', fontWeight: 500, marginTop: 2 }}>
+                  <span className="t-fine" style={{ display: 'block', fontWeight: 400, marginTop: 2 }}>
                     Suggested from your profile
                   </span>
                 )}

@@ -73,7 +73,7 @@ export default function EmployerNotify() {
           <span id={`${id}-err`} className={s.notifyError} role={showError ? 'alert' : undefined}>
             {showError ? 'Enter a valid work email.' : ''}
           </span>
-          <button type="submit" className={`${s.cta} ${s.ctaPrimary}`}>
+          <button type="submit" className="btn btn--primary btn--lg btn--block">
             Notify me
           </button>
         </form>

@@ -1,45 +1,44 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { RESUME } from '@/components/ZoneGuard';
 import { useStore } from '@/store/AppStore';
-import { Arrow, Bookmark, Doc, Heart, Spark, Star, Tick, Undo, Users } from '@/components/Icons';
+import { Arrow, Bookmark, Doc, Heart, Star, Tick, Undo } from '@/components/Icons';
+import { RoleCardFace } from '@/components/RoleCard';
 import LandingHeader, { NAV, scrollToHash } from './_landing/LandingHeader';
-import SwipePreview from './_landing/SwipePreview';
+import SwipePreview, { type DemoDecision } from './_landing/SwipePreview';
 import EmployerNotify from './_landing/EmployerNotify';
 import GrowthTree from './_landing/GrowthTree';
 import { track } from '@/lib/analytics';
 import s from './_landing/landing.module.css';
 
-/** S-01 Welcome — the marketplace in three pillars (slide 2), with the swipe demonstrated up front. */
-
-const PILLARS = [
-  {
-    title: 'Fast onboarding',
-    body: 'Sign in with LinkedIn, add your resume, get an optimized profile — three steps, under two minutes.',
-    meta: '3 steps · ~2 min',
-    icon: <Spark size={22} />,
-  },
-  {
-    title: 'Two-sided match',
-    body: 'Both sides opt in by swiping, so a match signals genuine mutual interest rather than a cold application.',
-    meta: 'Mutual opt-in',
-    icon: <Heart size={22} />,
-  },
-  {
-    title: 'Flexible engagement',
-    body: 'On a match, the employer can run a paid trial or go straight to a standard interview.',
-    meta: 'Paid trial or interview',
-    icon: <Users size={22} />,
-  },
-];
+/** S-01 Welcome — the swipe card is the hero; the page then walks one card through the product. */
 
 const TRUTHS = [
   { value: '3 steps', label: 'Connect, auto-build, target' },
   { value: '~2 min', label: 'From sign-in to first swipe' },
   { value: '1 tap', label: 'To pass or say you’re interested' },
   { value: 'Mutual', label: 'A match means both said yes' },
+];
+
+/** The three moves of the pinned chapter — one card travels through all three. */
+const MOVES = [
+  {
+    title: 'Connect',
+    body: 'Sign in with LinkedIn and add your resume. We build a structured profile, and nothing goes live until you approve it.',
+    meta: '3 steps · ~2 min',
+  },
+  {
+    title: 'Swipe',
+    body: 'Live roles, ranked for the role you’re after, with the pay band leading every card. One tap to pass, one to say you’re interested.',
+    meta: 'Pay shown up front',
+  },
+  {
+    title: 'Match',
+    body: 'Employers swipe too. When both sides say yes, they choose what happens next: a paid trial or a standard interview.',
+    meta: 'Mutual opt-in',
+  },
 ];
 
 const TALENT = [
@@ -65,7 +64,61 @@ const TALENT = [
   },
 ];
 
+const JOURNEY_ROLE = {
+  company: { name: 'Ledgerly', stage: 'Series C', sector: 'Fintech', location: 'Remote (US)' },
+  title: 'Senior Product Manager, Payments',
+  summary: 'Lead card issuing and usage-based billing for SMB finance teams.',
+  pay: { min: 175000, max: 210000, currency: 'USD' as const, period: 'year' as const },
+  postedDaysAgo: 2,
+};
+
 const delay = (ms: number) => ({ '--delay': `${ms}ms` }) as CSSProperties;
+
+type Lit = 'off' | 'spark' | 'match';
+
+/** "mutual." answers the demo: a right swipe brightens it, a mutual match fills it. */
+function useLitAccent() {
+  const [lit, setLit] = useState<Lit>('off');
+  const timer = useRef<number>();
+  const onDecision = useCallback(({ dir, matched }: DemoDecision) => {
+    if (dir !== 'yes') return;
+    window.clearTimeout(timer.current);
+    setLit(matched ? 'match' : 'spark');
+    timer.current = window.setTimeout(() => setLit('off'), matched ? 2600 : 900);
+  }, []);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return { lit, onDecision };
+}
+
+/** Scroll position through the pinned chapter → which of the three moves is showing. */
+function useMoveStep() {
+  const ref = useRef<HTMLElement | null>(null);
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const travel = Math.max(1, r.height - window.innerHeight);
+      const p = Math.min(1, Math.max(0, -r.top / travel));
+      setStep(Math.min(MOVES.length - 1, Math.floor(p * MOVES.length)));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+  return { ref, step };
+}
 
 export default function HomePage() {
   const { stage, user } = useStore();
@@ -73,6 +126,8 @@ export default function HomePage() {
   const resuming = stage !== 'new';
   // Returning candidates sign in with LinkedIn; once signed in, Log In just resumes.
   const loginHref = user ? resumeHref : '/signin';
+  const { lit, onDecision } = useLitAccent();
+  const moves = useMoveStep();
 
   // Scroll reveal: mark elements as shown once they enter the viewport.
   useEffect(() => {
@@ -107,7 +162,7 @@ export default function HomePage() {
   const findRoles = (location: CtaLocation) => (
     <Link
       href={resumeHref}
-      className={`${s.cta} ${s.ctaPrimary}`}
+      className="btn btn--primary btn--lg"
       onClick={() => track('landing_cta_clicked', { cta: 'find_roles', location })}
     >
       {resuming ? 'Continue to roles' : 'Find Roles'} <Arrow size={18} />
@@ -116,7 +171,7 @@ export default function HomePage() {
   const postRole = (location: CtaLocation) => (
     <a
       href="#employers"
-      className={`${s.cta} ${s.ctaSecondary}`}
+      className="btn btn--lg"
       onClick={(e) => {
         track('landing_cta_clicked', { cta: 'post_role', location });
         scrollToHash(e, '#employers', 'input');
@@ -135,42 +190,44 @@ export default function HomePage() {
       <LandingHeader resumeHref={resumeHref} loginHref={loginHref} resuming={resuming} />
 
       <main id="main">
-        {/* ── Hero ─────────────────────────────────────────── */}
+        {/* ── Hero: the card is the centrepiece, the headline frames it ── */}
         <section id="hero" className={s.hero} aria-labelledby="hero-title">
           <div className={s.heroBg} aria-hidden="true" />
           <div className={s.heroGridLines} aria-hidden="true" />
           <div className={`${s.container} ${s.heroGrid}`}>
-            <div className={s.heroCopy}>
-              <span className={`${s.eyebrow} ${s.enter}`}>
-                <span className={s.pulse} aria-hidden="true" />A two-sided hiring marketplace
+            <span className={`${s.eyebrow} ${s.enter}`}>
+              <span className={s.pulse} aria-hidden="true" />A two-sided hiring marketplace
+            </span>
+            <h1 id="hero-title" className={s.headline}>
+              <span className={`${s.headlineLine} ${s.line1} ${s.enter}`} style={delay(80)}>
+                Swipe on roles.{' '}
               </span>
-              <h1 id="hero-title" className={`${s.headline} ${s.enter}`} style={delay(80)}>
-                <span className={s.headlineLine}>Swipe on roles.</span>
-                <span className={s.headlineLine}>
-                  Match when it’s <em className={s.headlineAccent}>mutual.</em>
-                </span>
-              </h1>
-              <p className={`${s.sub} ${s.enter}`} style={delay(180)}>
-                Live roles with the pay shown up front. One tap to pass, one tap to say you’re interested.
-              </p>
-              <div className={`${s.ctaRow} ${s.enter}`} style={delay(260)}>
+              <span className={`${s.headlineLine} ${s.line2} ${s.enter}`} style={delay(200)}>
+                Match when it’s{' '}
+                <em className={s.headlineAccent} data-lit={lit}>
+                  mutual.
+                </em>
+              </span>
+            </h1>
+            <div className={`${s.heroCopy} ${s.enter}`} style={delay(280)}>
+              <p className={s.sub}>Live roles with the pay shown up front. One tap to pass, one tap to say you’re interested.</p>
+              <div className={s.ctaRow}>
                 {findRoles('hero')}
                 {postRole('hero')}
               </div>
-              <ul className={`${s.assurances} ${s.enter}`} style={delay(340)}>
-                {['About two minutes to set up', 'Pay shown up front', 'You approve your profile first'].map((t) => (
-                  <li key={t}>
-                    <span className={s.check} aria-hidden="true">
-                      <Tick size={12} />
-                    </span>
-                    {t}
-                  </li>
-                ))}
-              </ul>
             </div>
-
-            <div className={s.enter} style={delay(220)}>
-              <SwipePreview />
+            <ul className={`${s.assurances} ${s.enter}`} style={delay(360)}>
+              {['About two minutes to set up', 'Pay shown up front', 'You approve your profile first'].map((t) => (
+                <li key={t}>
+                  <span className={s.check} aria-hidden="true">
+                    <Tick size={12} />
+                  </span>
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <div className={`${s.heroStage} ${s.enter}`} style={delay(140)}>
+              <SwipePreview onDecision={onDecision} />
             </div>
           </div>
         </section>
@@ -187,41 +244,73 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── How it works ─────────────────────────────────── */}
-        <section id="how" className={s.section} aria-labelledby="how-title" tabIndex={-1}>
-          <div className={s.container}>
-            <div className={`${s.sectionHead} ${s.reveal}`} data-reveal>
-              <span className={s.kicker}>How it works</span>
-              <h2 id="how-title" className={s.h2}>
-                From resume to a <em>real match</em>, in three moves.
-              </h2>
-              <p className={s.lead}>
-                A profile you approve, a deck of live roles, and matches that only happen when both sides say yes.
-              </p>
-            </div>
+        {/* ── How it works: a pinned chapter, one card travels Connect → Swipe → Match ── */}
+        <section
+          id="how"
+          ref={moves.ref}
+          className={s.moves}
+          aria-labelledby="how-title"
+          tabIndex={-1}
+          data-step={moves.step}
+        >
+          <div className={s.movesPin}>
+            <div className={`${s.container} ${s.movesGrid}`}>
+              <div className={s.movesHead}>
+                <span className={`${s.kicker} ${s.kickerLight}`}>How it works</span>
+                <h2 id="how-title" className={`${s.h2} ${s.h2Light}`}>
+                  From resume to a <em>real match</em>, in three moves.
+                </h2>
+              </div>
 
-            <div className={s.stepsWrap}>
-              <span className={s.connector} data-reveal aria-hidden="true" />
               <ol className={s.steps}>
-                {PILLARS.map((p, i) => (
-                  <li key={p.title} className={`${s.step} ${s.reveal}`} data-reveal style={delay(i * 140)}>
-                    <span className={s.node} aria-hidden="true">
+                {MOVES.map((m, i) => (
+                  <li key={m.title} className={s.move} data-active={i === moves.step} aria-current={i === moves.step ? 'step' : undefined}>
+                    <span className={s.moveNum} aria-hidden="true">
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <article className={s.stepCard}>
-                      <span className={s.iconBadge} aria-hidden="true">
-                        {p.icon}
-                      </span>
-                      <h3 className={s.stepTitle}>
+                    <div>
+                      <h3 className={s.moveTitle}>
                         <span className="sr-only">Step {i + 1}: </span>
-                        {p.title}
+                        {m.title}
                       </h3>
-                      <p className={s.stepBody}>{p.body}</p>
-                      <span className={s.stepMeta}>{p.meta}</span>
-                    </article>
+                      <p className={s.moveBody}>{m.body}</p>
+                      <span className={s.moveMeta}>{m.meta}</span>
+                    </div>
                   </li>
                 ))}
               </ol>
+
+              <div className={s.journey} data-step={moves.step} aria-hidden="true">
+                <div className={s.jInputs}>
+                  <span className={s.inputPill}>
+                    <span style={{ color: 'var(--linkedin)', fontWeight: 700 }}>in</span> Sign in with LinkedIn
+                  </span>
+                  <span className={s.inputPill}>
+                    <Doc size={14} /> resume.pdf
+                  </span>
+                </div>
+                <div className={`card pcard ${s.jProfile}`}>
+                  <div className="pcard__head">
+                    <span className="eyebrow">Your profile</span>
+                    <div className={s.jProfileTitle}>Senior Product Manager</div>
+                  </div>
+                  <div className={s.jProfileBody}>
+                    {['Roadmapping', 'SQL', 'Payments'].map((t) => (
+                      <span key={t} className="tag">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className={`rolecard ${s.jRole}`}>
+                  <RoleCardFace role={JOURNEY_ROLE} as="div" />
+                  <span className="rolecard__stamp rolecard__stamp--yes">Interested</span>
+                </div>
+                <div className={s.jHeart}>
+                  <Heart size={30} />
+                </div>
+                <div className={s.jMatch}>It’s a match</div>
+              </div>
             </div>
           </div>
         </section>
@@ -254,10 +343,11 @@ export default function HomePage() {
               <div className={s.ctaRow}>{findRoles('talent')}</div>
             </div>
 
+            {/* The app's own profile card (ProfileConfirmCard's classes), not a look-alike. */}
             <div className={`${s.profileVisual} ${s.reveal}`} data-reveal style={delay(160)} aria-hidden="true">
               <div className={s.inputs}>
                 <span className={s.inputPill}>
-                  <span style={{ color: '#0a66c2', fontWeight: 800 }}>in</span> Sign in with LinkedIn
+                  <span style={{ color: 'var(--linkedin)', fontWeight: 700 }}>in</span> Sign in with LinkedIn
                 </span>
                 <span className={s.inputPill}>
                   <Doc size={14} /> resume.pdf
@@ -268,28 +358,32 @@ export default function HomePage() {
                   <path d="M10 2v22M3 17l7 7 7-7" />
                 </svg>
               </div>
-              <div className={s.pcard}>
-                <div className={s.pcardHead}>
-                  <div className={s.pcardEyebrow}>Your profile</div>
-                  <div className={s.pcardTitle}>Senior Product Manager</div>
-                  <p className={s.pcardSummary}>
+              <div className="card pcard">
+                <div className="pcard__head">
+                  <span className="eyebrow">Your profile</span>
+                  <div className="t-h3" style={{ marginTop: 8 }}>
+                    Senior Product Manager
+                  </div>
+                  <p className="t-fine" style={{ marginTop: 8, color: 'var(--lilac-3)' }}>
                     7 years in B2B SaaS product, most recently leading payments at a Series C fintech.
                   </p>
                 </div>
-                <div className={s.pcardBody}>
-                  <div className={s.tags}>
+                <div className="pcard__body">
+                  <div className="pcard__section" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {['Roadmapping', 'User Research', 'SQL', 'A/B Testing', 'Payments'].map((t) => (
-                      <span key={t} className={s.tag}>
+                      <span key={t} className="tag">
                         {t}
                       </span>
                     ))}
                   </div>
-                  <div className={s.standout}>
-                    <Star size={16} />
-                    Launched usage-based billing that lifted net revenue retention from 104% to 118%.
+                  <div className="pcard__section">
+                    <div className="standout">
+                      <Star size={16} />
+                      <span>Launched usage-based billing that lifted net revenue retention from 104% to 118%.</span>
+                    </div>
                   </div>
-                  <div className={s.salaryRow}>
-                    <span className={s.fine}>Salary expectation</span>
+                  <div className="pcard__section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span className="t-fine">Salary expectation</span>
                     <span className={s.salary}>$160K – $185K</span>
                   </div>
                 </div>

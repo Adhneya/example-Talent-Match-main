@@ -28,22 +28,23 @@ async function landingLayout(page: Page) {
       menuButton: style('menuBtn')?.display !== 'none',
       hero: cols('heroGrid'),
       truths: cols('truthsGrid'),
-      steps: cols('steps'),
     };
   });
 }
 
 test.describe('Breakpoints — landing', () => {
   const cases: [number, Partial<Awaited<ReturnType<typeof landingLayout>>>][] = [
-    [375, { gutter: '16px', menuButton: true, nav: false, hero: 1, truths: 1, steps: 1 }], // below xs
-    [400, { gutter: '16px', truths: 2, steps: 1 }], // xs
-    [767, { gutter: '16px', truths: 2, steps: 1 }], // just below md
-    [768, { gutter: '24px', truths: 4, steps: 3, menuButton: true }], // md
+    [375, { gutter: '16px', menuButton: true, nav: false, hero: 1, truths: 2 }], // below xs: strip stays 2×2
+    [400, { gutter: '16px', truths: 2 }], // xs
+    [639, { hero: 1 }], // just below sm: hero stacks (card follows the CTAs)
+    [640, { hero: 2 }], // sm: card beside the copy
+    [767, { gutter: '16px', truths: 2 }], // just below md
+    [768, { gutter: '32px', truths: 4, menuButton: true, hero: 2 }], // md
     [919, { menuButton: true, nav: false }], // just below the nav content breakpoint
-    [920, { menuButton: false, nav: true, hero: 1 }], // full nav fits
-    [1079, { hero: 1 }], // just below lg
-    [1080, { hero: 2, steps: 3 }], // lg: hero goes two-column
-    [1440, { hero: 2, nav: true }],
+    [920, { menuButton: false, nav: true, hero: 2 }], // full nav fits
+    [1079, { hero: 2 }], // just below lg
+    [1080, { hero: 3 }], // lg: the headline frames the card (line one above, line two below)
+    [1440, { hero: 3, nav: true }],
   ];
 
   for (const [width, expected] of cases) {
@@ -54,6 +55,26 @@ test.describe('Breakpoints — landing', () => {
       const layout = await landingLayout(page);
       expect(layout.overflow, 'no horizontal scroll').toBeLessThanOrEqual(0);
       expect(layout).toMatchObject(expected);
+    });
+  }
+
+  // #3: the demo card — the product proof — is in the first viewport at every common size.
+  for (const [width, height] of [
+    [375, 812],
+    [768, 1024],
+    [1024, 768],
+    [1440, 900],
+  ]) {
+    test(`the hero card starts inside the first viewport (${width}×${height})`, async ({ page }) => {
+      await at(page, width, height);
+      await page.goto('/');
+      const card = (await page.locator('#hero .deck__top .rolecard').boundingBox())!;
+      expect(card.y).toBeLessThan(height - 200);
+      if (width >= 1080) {
+        // Line two of the headline sits below the card and must still be on screen.
+        const line2 = (await page.locator('[class*="_line2__"]').boundingBox())!;
+        expect(line2.y + line2.height).toBeLessThanOrEqual(height);
+      }
     });
   }
 

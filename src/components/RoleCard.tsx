@@ -1,34 +1,53 @@
-'use client';
-
-import { ExternalLink } from '@/components/Icons';
-import { formatPay, roleMeta } from '@/lib/format';
+import type { ReactNode } from 'react';
+import { ExternalLink, MapPin } from '@/components/Icons';
+import { formatPay, postedLabel } from '@/lib/format';
 import type { Role } from '@/lib/types';
 
 /**
- * Card regions taken directly from slide 5: navy company header, role title,
- * one-line description, tinted pay panel. Overflow goes to the detail sheet.
+ * The role card — one face shared by the deck, the detail sheet, match detail
+ * and the landing-page demo, so what the homepage promises is what the app
+ * shows. Pay leads (decision 4: pay is the hook), directly under the company
+ * header; the rest of the card is title, one line, and scannable signals.
+ * Overflow goes to the detail sheet.
  */
 
-export function CompanyHeader({ role }: { role: Role }) {
+/** Per-company monogram tone — palette colours only (on the navy header), stable per name. */
+const TONES = ['highlight', 'lilac', 'lilac-pale', 'white'] as const;
+export function companyTone(name: string) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return TONES[h % TONES.length];
+}
+
+export function companyInitials(name: string) {
+  const words = name.split(/\s+/).filter(Boolean);
+  return (words.length > 1 ? words[0][0] + words[1][0] : name.slice(0, 2)).toUpperCase();
+}
+
+export function CompanyMark({ name, size = 'md' }: { name: string; size?: 'md' | 'sm' }) {
+  return (
+    <span className={`cmark cmark--${size}`} data-tone={companyTone(name)} aria-hidden="true">
+      {companyInitials(name)}
+    </span>
+  );
+}
+
+type CardRole = Pick<Role, 'company' | 'title' | 'summary' | 'pay' | 'postedDaysAgo'>;
+
+export function CompanyHeader({ role }: { role: CardRole }) {
   return (
     <div className="rolecard__head">
-      <div className="rolecard__company">{role.company.name}</div>
-      <div className="rolecard__meta">{roleMeta(role)}</div>
+      <CompanyMark name={role.company.name} />
+      <div style={{ minWidth: 0 }}>
+        <div className="rolecard__company">{role.company.name}</div>
+        <div className="rolecard__meta">{role.company.sector}</div>
+      </div>
     </div>
   );
 }
 
-export function RoleSummary({ role }: { role: Role }) {
-  return (
-    <>
-      <h2 className="rolecard__title">{role.title}</h2>
-      <p className="rolecard__summary">{role.summary}</p>
-    </>
-  );
-}
-
-/** Pay is a first-class card region, shown immediately (slide 5). */
-export function PayRangePanel({ role }: { role: Role }) {
+/** Pay is the first thing read after the company — a large numeral, not a footnote (slide 5). */
+export function PayRangePanel({ role }: { role: CardRole }) {
   if (!role.pay) {
     // Decision 4: roles without pay are filtered out of the deck, so this only shows
     // for a direct link to such a role. Defensive fallback, not a designed state.
@@ -41,11 +60,43 @@ export function PayRangePanel({ role }: { role: Role }) {
   }
   return (
     <div className="pay">
-      <div className="pay__label">Pay range</div>
-      <div className="pay__value">
-        {formatPay(role.pay)} <small>per year</small>
-      </div>
+      <div className="pay__label">Pay range · per year</div>
+      <div className="pay__value">{formatPay(role.pay)}</div>
     </div>
+  );
+}
+
+/** Three scannable signals that used to be one cramped meta line. */
+export function RoleSignals({ role }: { role: CardRole }) {
+  const remote = /remote/i.test(role.company.location);
+  return (
+    <ul className="signals" aria-label="At a glance">
+      <li className={`signal${remote ? ' signal--accent' : ''}`}>
+        <MapPin size={14} />
+        {role.company.location}
+      </li>
+      <li className="signal">{role.company.stage}</li>
+      <li className="signal">{postedLabel(role.postedDaysAgo)}</li>
+    </ul>
+  );
+}
+
+/**
+ * The card's content regions. `footer` is the deck's source + More details row;
+ * the static and demo cards leave it out.
+ */
+export function RoleCardFace({ role, footer, as: Title = 'h2' }: { role: CardRole; footer?: ReactNode; as?: 'h2' | 'h3' | 'div' }) {
+  return (
+    <>
+      <CompanyHeader role={role} />
+      <PayRangePanel role={role} />
+      <div className="rolecard__body">
+        <Title className="rolecard__title">{role.title}</Title>
+        <p className="rolecard__summary">{role.summary}</p>
+        <RoleSignals role={role} />
+        {footer && <div className="rolecard__foot">{footer}</div>}
+      </div>
+    </>
   );
 }
 
@@ -83,11 +134,7 @@ export function ApplyOutButton({
 export function RoleCardStatic({ role }: { role: Role }) {
   return (
     <div className="rolecard rolecard--static">
-      <CompanyHeader role={role} />
-      <div className="rolecard__body">
-        <RoleSummary role={role} />
-      </div>
-      <PayRangePanel role={role} />
+      <RoleCardFace role={role} />
     </div>
   );
 }

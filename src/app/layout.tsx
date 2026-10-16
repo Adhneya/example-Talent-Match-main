@@ -31,7 +31,7 @@ const sans = Carlito({
 
 const devanagari = Noto_Sans_Devanagari({
   subsets: ['devanagari'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '700'], // the same two weights as the Latin faces — see globals.css
   display: 'swap',
   variable: '--font-devanagari',
 });

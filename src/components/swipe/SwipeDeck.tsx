@@ -9,7 +9,8 @@ import { track, type SwipeMethod } from '@/lib/analytics';
 import { TARGET_ROLES } from '@/lib/fixtures/roles';
 import type { Decision, Role } from '@/lib/types';
 import { Cards, Cross, Heart, Undo } from '@/components/Icons';
-import { CompanyHeader, PayRangePanel, RoleSummary, SourceBadge } from '@/components/RoleCard';
+import { RoleCardFace, SourceBadge } from '@/components/RoleCard';
+import { flyToSaved, heartBurst, tick } from '@/lib/motion';
 import MatchCelebrationModal from '@/components/MatchCelebrationModal';
 
 /**
@@ -93,6 +94,7 @@ export default function SwipeDeck() {
       ) : top ? (
         <CardStack
           role={top}
+          next={deck[1]}
           behind={Math.min(2, deck.length - 1)}
           onDecide={(d, method) => decide(top, d, method)}
           onOpen={() => openDetail(top)}
@@ -138,12 +140,15 @@ function useReducedMotion() {
 
 function CardStack({
   role,
+  next,
   behind,
   onDecide,
   onOpen,
   keyboard,
 }: {
   role: Role;
+  /** The following role, rendered one step back so the deck never shows an empty frame. */
+  next?: Role;
   behind: number;
   onDecide: (d: Decision, method: SwipeMethod) => void;
   onOpen: () => void;
@@ -153,7 +158,12 @@ function CardStack({
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [exit, setExit] = useState<Decision | null>(null);
+  // The role that rose from the peek position: it's already in place, so it skips the entrance.
+  const [promotedId, setPromotedId] = useState<string | null>(null);
+  const nextRef = useRef(next);
+  nextRef.current = next;
   const stackRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const startX = useRef(0);
   const lastX = useRef(0);
   const lastT = useRef(0);
@@ -167,19 +177,23 @@ function CardStack({
   const onDecideRef = useRef(onDecide);
   onDecideRef.current = onDecide;
 
-  // New card at the head → reset gesture state.
-  useEffect(() => {
+  // New card at the head → reset gesture state during render (not in an effect), so the
+  // arriving card never paints one frame with the previous card's exit transform.
+  const [gestureFor, setGestureFor] = useState(role.id);
+  if (gestureFor !== role.id) {
+    setGestureFor(role.id);
     setDx(0);
     setDragging(false);
     setExit(null);
     exitRef.current = null;
     decided.current = false;
     vel.current = 0;
-  }, [role.id]);
+  }
 
   const finish = useCallback(() => {
     if (decided.current || !exitRef.current) return;
     decided.current = true;
+    setPromotedId(nextRef.current?.id ?? null);
     onDecideRef.current(exitRef.current, methodRef.current);
   }, []);
 
@@ -189,6 +203,15 @@ function CardStack({
     methodRef.current = method;
     setDragging(false);
     setExit(d);
+    if (d === 'interested') {
+      // The reward (#7): a burst on the card, a heart that flies into Saved, a tap on touch.
+      tick();
+      const rect = cardRef.current?.getBoundingClientRect();
+      if (rect) {
+        heartBurst(rect.left + rect.width / 2, rect.top + rect.height * 0.42);
+        flyToSaved(rect);
+      }
+    }
   }, []);
 
   // Safety net in case transitionend never fires (e.g. background tab).
@@ -283,11 +306,18 @@ function CardStack({
 
   return (
     <>
-      <div className="deck__stack" ref={stackRef}>
+      <div className="deck__stack" ref={stackRef} data-advancing={exit ? 'true' : undefined}>
         {behind >= 2 && <div className="deck__ghost deck__ghost--2" aria-hidden="true" />}
-        {behind >= 1 && <div className="deck__ghost deck__ghost--1" aria-hidden="true" />}
-        <div key={role.id} className="deck__top">
+        {behind >= 1 && next && (
+          <div key={next.id} className="deck__peek" aria-hidden="true">
+            <div className="rolecard">
+              <RoleCardFace role={next} as="div" footer={<SourceBadge role={next} />} />
+            </div>
+          </div>
+        )}
+        <div key={role.id} className={`deck__top${role.id === promotedId ? ' deck__top--promoted' : ''}`}>
           <div
+            ref={cardRef}
             className="rolecard"
             role="group"
             aria-roledescription="role card"
@@ -299,17 +329,17 @@ function CardStack({
             onTransitionEnd={onTransitionEnd}
             style={{ transform, opacity, transition, cursor: dragging ? 'grabbing' : 'grab' }}
           >
-            <CompanyHeader role={role} />
-            <div className="rolecard__body">
-              <RoleSummary role={role} />
-              <div className="rolecard__foot">
-                <SourceBadge role={role} />
-                <button type="button" className="rolecard__more" onClick={onOpen}>
-                  More details
-                </button>
-              </div>
-            </div>
-            <PayRangePanel role={role} />
+            <RoleCardFace
+              role={role}
+              footer={
+                <>
+                  <SourceBadge role={role} />
+                  <button type="button" className="rolecard__more" onClick={onOpen}>
+                    More details
+                  </button>
+                </>
+              }
+            />
 
             <span className="rolecard__stamp rolecard__stamp--yes" style={{ opacity: yes }} aria-hidden="true">
               Interested
